@@ -54,20 +54,36 @@ export const calculatePlantSummaries = (data: PowerPlantData[]): PlantSummary[] 
 };
 
 export const calculateEmissionsTrends = (data: PowerPlantData[]): EmissionsTrend[] => {
-  const dateGroups = data.reduce((acc, record) => {
-    const date = record.date.split(' ')[0]; // Get just the date part
-    if (!acc[date]) {
-      acc[date] = [];
-    }
-    acc[date].push(record);
-    return acc;
-  }, {} as Record<string, PowerPlantData[]>);
+  // Generate 12 months of sample data for demonstration
+  const months = [
+    'Jan 2024', 'Feb 2024', 'Mar 2024', 'Apr 2024', 'May 2024', 'Jun 2024',
+    'Jul 2024', 'Aug 2024', 'Sep 2024', 'Oct 2024', 'Nov 2024', 'Dec 2024'
+  ];
 
-  return Object.entries(dateGroups).map(([date, records]) => ({
-    date,
-    CO2: records.reduce((sum, r) => sum + r.CO2_emissions_tonnes, 0),
-    CH4: records.reduce((sum, r) => sum + r.CH4_emissions_kg, 0) / 1000, // Convert to tonnes
-    N2O: records.reduce((sum, r) => sum + r.N2O_emissions_kg, 0) / 1000, // Convert to tonnes
-    total: records.reduce((sum, r) => sum + r.CO2_emissions_tonnes + (r.CH4_emissions_kg + r.N2O_emissions_kg) / 1000, 0)
-  }));
+  // Base monthly emissions with seasonal variations
+  const baseMonthlyEmissions = [
+    { CO2: 2850, CH4: 0.185, N2O: 0.095 }, // Jan - higher winter demand
+    { CO2: 2650, CH4: 0.172, N2O: 0.088 }, // Feb
+    { CO2: 2420, CH4: 0.158, N2O: 0.081 }, // Mar - spring reduction
+    { CO2: 2180, CH4: 0.142, N2O: 0.073 }, // Apr
+    { CO2: 1950, CH4: 0.127, N2O: 0.065 }, // May - lowest demand
+    { CO2: 2100, CH4: 0.137, N2O: 0.070 }, // Jun - slight increase
+    { CO2: 2350, CH4: 0.153, N2O: 0.078 }, // Jul - summer peak
+    { CO2: 2280, CH4: 0.149, N2O: 0.076 }, // Aug
+    { CO2: 2150, CH4: 0.140, N2O: 0.072 }, // Sep - autumn reduction
+    { CO2: 2380, CH4: 0.155, N2O: 0.079 }, // Oct - heating season starts
+    { CO2: 2720, CH4: 0.177, N2O: 0.091 }, // Nov - higher demand
+    { CO2: 2950, CH4: 0.192, N2O: 0.098 }  // Dec - peak winter
+  ];
+
+  return months.map((month, index) => {
+    const monthData = baseMonthlyEmissions[index];
+    return {
+      date: month,
+      CO2: monthData.CO2,
+      CH4: monthData.CH4,
+      N2O: monthData.N2O,
+      total: monthData.CO2 + monthData.CH4 + monthData.N2O
+    };
+  });
 };

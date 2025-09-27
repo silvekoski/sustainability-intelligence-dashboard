@@ -28,7 +28,7 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
   const isIncreasing = trendPercentage > 0;
 
   // Calculate day-to-day changes for better comparison
-  const dayChanges = data.map((item, index) => {
+  const monthChanges = data.map((item, index) => {
     if (index === 0) return { ...item, change: 0, changePercent: 0 };
     const prevValue = data[index - 1].total;
     const change = item.total - prevValue;
@@ -67,7 +67,7 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-1">Emissions Trend Analysis</h3>
-          <p className="text-sm text-gray-500">Daily emissions breakdown by gas type</p>
+          <p className="text-sm text-gray-500">Monthly emissions breakdown by gas type (2024)</p>
         </div>
         <div className={`flex items-center space-x-2 px-3 py-2 rounded-lg ${
           isIncreasing ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'
@@ -84,20 +84,24 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
       </div>
 
       {/* Day-to-day comparison summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
         <div className="text-center">
-          <div className="text-2xl font-bold text-gray-900">{data[0]?.total.toFixed(0)}t</div>
-          <div className="text-sm text-gray-600">Jan 1 Total</div>
+          <div className="text-2xl font-bold text-gray-900">{Math.min(...data.map(d => d.total)).toFixed(0)}t</div>
+          <div className="text-sm text-gray-600">Lowest Month</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-gray-900">{data[data.length - 1]?.total.toFixed(0)}t</div>
-          <div className="text-sm text-gray-600">Jan 2 Total</div>
+          <div className="text-2xl font-bold text-gray-900">{Math.max(...data.map(d => d.total)).toFixed(0)}t</div>
+          <div className="text-sm text-gray-600">Highest Month</div>
+        </div>
+        <div className="text-center">
+          <div className="text-2xl font-bold text-gray-900">{avgValue.toFixed(0)}t</div>
+          <div className="text-sm text-gray-600">Monthly Average</div>
         </div>
         <div className="text-center">
           <div className={`text-2xl font-bold ${isIncreasing ? 'text-red-600' : 'text-green-600'}`}>
-            {isIncreasing ? '+' : ''}{(lastValue - firstValue).toFixed(0)}t
+            {isIncreasing ? '+' : ''}{trendPercentage.toFixed(1)}%
           </div>
-          <div className="text-sm text-gray-600">Net Change</div>
+          <div className="text-sm text-gray-600">Year-over-Year</div>
         </div>
       </div>
       
@@ -157,7 +161,7 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
         
         {/* Chart bars */}
         <div className="h-80 flex items-end justify-between space-x-3 relative z-20">
-          {dayChanges.map((item, index) => {
+          {monthChanges.map((item, index) => {
             // Use scaled values for subtle visual improvement
             const co2Height = ((item.CO2 - scaledMin) / effectiveRange) * 100;
             const ch4Height = ((item.CH4 - scaledMin) / effectiveRange) * 100;
@@ -172,11 +176,7 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
                   <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-30">
                     <div className="bg-gray-900 text-white text-xs rounded-lg p-3 shadow-lg min-w-max">
                       <div className="font-semibold mb-2">
-                        {new Date(item.date).toLocaleDateString('en-US', { 
-                          month: 'short', 
-                          day: 'numeric',
-                          year: 'numeric'
-                        })}
+                        {item.date}
                       </div>
                       <div className="space-y-1">
                         <div className="flex items-center justify-between space-x-4">
@@ -251,10 +251,7 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
                 {/* Date label */}
                 <div className="mt-4 text-center">
                   <p className="text-xs text-gray-500 font-medium">
-                  {new Date(item.date).toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric' 
-                  })}
+                    {item.date.split(' ')[0]}
                   </p>
                   {index > 0 && (
                     <p className={`text-xs font-bold mt-1 ${
