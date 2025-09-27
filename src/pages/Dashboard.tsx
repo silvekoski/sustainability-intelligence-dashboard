@@ -7,6 +7,7 @@ import { EfficiencyGauge } from '../components/EfficiencyGauge';
 import { FactoryComparisonPanel } from '../components/FactoryComparisonPanel';
 import { ComplianceReportGenerator } from '../components/ComplianceReportGenerator';
 import { EUPermitsCard } from '../components/EUPermitsCard';
+import { SECClimateDisclosureSection } from '../components/SECClimateDisclosureSection';
 import { CSVUploadManager } from '../components/CSVUploadManager';
 import { useData } from '../hooks/useData';
 import { PowerPlantData } from '../types';
@@ -186,6 +187,11 @@ export const Dashboard: React.FC = () => {
       {/* Factory Comparison & Compliance Panel */}
       <div className="mb-8">
         <FactoryComparisonPanel currentData={csvData} />
+      </div>
+
+      {/* SEC Climate Disclosure Extract */}
+      <div className="mb-8">
+        <SECClimateDisclosureSection currentData={csvData} />
       </div>
 
       {/* EU Compliance Report Generator */}

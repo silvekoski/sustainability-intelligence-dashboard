@@ -420,19 +420,6 @@ Data Act Compliance: Data interoperability and portability implemented`;
           </div>
         </div>
 
-        {/* SEC Compliance Table */}
-        {secReport && (
-          <div className="mt-6">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">SEC Climate Disclosure Extract</h3>
-              <p className="text-sm text-gray-600">US SEC reporting entities and compliance summary</p>
-            </div>
-            <SECComplianceTable 
-              facilities={secReport.facilities} 
-              summary={secReport.summary} 
-            />
-          </div>
-        )}
       </div>
     </div>
   );
