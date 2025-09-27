@@ -1,3 +1,21 @@
+export interface EUPermit {
+  id: string;
+  user_id: string;
+  active_permits: number;
+  company_name?: string;
+  permit_year: number;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EUPermitInput {
+  active_permits: number;
+  company_name?: string;
+  permit_year: number;
+  notes?: string;
+}
+
 export interface PermitsData {
   active_permits: number;
   avg_consumption_rate_t_per_month: number;

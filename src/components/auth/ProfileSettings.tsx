@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { User, Mail, Calendar, Loader2, AlertCircle, CheckCircle, Trash2, Lock, X } from 'lucide-react';
+import { User, Mail, Calendar, Loader2, AlertCircle, CheckCircle, Trash2, Lock, X, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { updatePasswordSchema } from '../../utils/validation';
 import { UpdateProfileData, UpdatePasswordCredentials } from '../../types/auth';
 import { AuthService } from '../../services/authService';
+import { EUPermitsForm } from '../EUPermitsForm';
 
 export const ProfileSettings: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'danger'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'permits' | 'password' | 'danger'>('profile');
   const [profileError, setProfileError] = useState<string | null>(null);
   const [profileSuccess, setProfileSuccess] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -82,6 +83,7 @@ export const ProfileSettings: React.FC = () => {
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
+    { id: 'permits', label: 'EU Permits', icon: Shield },
     { id: 'password', label: 'Password', icon: Lock },
     { id: 'danger', label: 'Danger Zone', icon: Trash2 },
   ];
@@ -237,6 +239,12 @@ export const ProfileSettings: React.FC = () => {
                     </button>
                   </form>
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'permits' && (
+              <div className="space-y-6">
+                <EUPermitsForm />
               </div>
             )}
 
