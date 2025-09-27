@@ -1,33 +1,3 @@
-I get error:
-
-plugin:vite:esbuild] Transform failed with 1 error:
-/home/project/src/services/complianceReportService.ts:118:11: ERROR: Expected ";" but found "{"
-/home/project/src/services/complianceReportService.ts:118:11
-Expected ";" but found "{"
-116|    }
-117|  
-118|      return {
-   |             ^
-119|        ...baseData,
-120|        secDisclosure,
-    at failureErrorWithLog (/home/project/node_modules/esbuild/lib/main.js:1462:15)
-    at eval (/home/project/node_modules/esbuild/lib/main.js:745:50)
-    at responseCallbacks.<computed> (/home/project/node_modules/esbuild/lib/main.js:612:9)
-    at handleIncomingPacket (/home/project/node_modules/esbuild/lib/main.js:667:12)
-    at Socket.readFromStdout (/home/project/node_modules/esbuild/lib/main.js:590:7)
-    at Socket.emit (node:events:30:11034)
-    at addChunk (node:internal/streams/readable:230:3174)
-    at readableAddChunkPushByteMode (node:internal/streams/readable:230:6158)
-    at Readable.push (node:internal/streams/readable:230:6192)
-    at _0x3f7385.onStreamRead (node:internal/stream_base_commons:216:2625
-Click outside, press Esc key, or fix the code to dismiss.
-You can also disable this overlay by setting server.hmr.overlay to false in vite.config.ts.
-
-
-
-code
-======
-
 import React, { useState } from 'react';
 import { ComplianceReportService } from '../services/complianceReportService';
 import { Download, FileText, Loader2, Globe, Flag, Database } from 'lucide-react';
@@ -40,12 +10,12 @@ export const ComplianceReportGenerator: React.FC = () => {
     setIsGenerating(true);
     try {
       const report = await ComplianceReportService.generateComplianceReport(jurisdiction);
-      
+
       // Generate PDF
       const { jsPDF } = await import('jspdf');
       const pdf = new jsPDF();
-      
-      // Clean text function to handle special characters
+
+      // Clean text function
       const cleanText = (text: string): string => {
         return text
           .replace(/€/g, 'EUR')
@@ -53,7 +23,6 @@ export const ComplianceReportGenerator: React.FC = () => {
           .replace(/₄/g, '4')
           .replace(/–/g, '-')
           .replace(/'/g, "'")
-          .replace(/"/g, '"')
           .replace(/"/g, '"');
       };
 
@@ -61,23 +30,23 @@ export const ComplianceReportGenerator: React.FC = () => {
       const addWrappedText = (text: string, x: number, y: number, maxWidth: number, fontSize: number = 11): number => {
         const cleanedText = cleanText(text);
         pdf.setFontSize(fontSize);
-        
+
         const paragraphs = cleanedText.split('\n');
         let currentY = y;
-        
+
         paragraphs.forEach((paragraph, paragraphIndex) => {
           if (paragraph.trim() === '') {
             currentY += fontSize * 0.5;
             return;
           }
-          
+
           const words = paragraph.split(' ');
           let currentLine = '';
-          
+
           words.forEach((word, wordIndex) => {
             const testLine = currentLine + (currentLine ? ' ' : '') + word;
             const testWidth = pdf.getTextWidth(testLine);
-            
+
             if (testWidth > maxWidth && currentLine) {
               pdf.text(currentLine, x, currentY);
               currentY += fontSize * 0.6;
@@ -85,18 +54,18 @@ export const ComplianceReportGenerator: React.FC = () => {
             } else {
               currentLine = testLine;
             }
-            
+
             if (wordIndex === words.length - 1) {
               pdf.text(currentLine, x, currentY);
               currentY += fontSize * 0.6;
             }
           });
-          
+
           if (paragraphIndex < paragraphs.length - 1) {
             currentY += fontSize * 0.3;
           }
         });
-        
+
         return currentY;
       };
 
@@ -104,15 +73,18 @@ export const ComplianceReportGenerator: React.FC = () => {
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       const margin = 20;
-      const contentWidth = pageWidth - (2 * margin);
+      const contentWidth = pageWidth - 2 * margin;
       let yPosition = margin;
 
       // Title
       pdf.setFontSize(20);
       pdf.setFont('helvetica', 'bold');
-      const title = jurisdiction === 'EU' ? 'EU Compliance Report' : 
-                   jurisdiction === 'US' ? 'US SEC Climate Disclosure Report' : 
-                   'Multi-Jurisdictional Compliance Report';
+      const title =
+        jurisdiction === 'EU'
+          ? 'EU Compliance Report'
+          : jurisdiction === 'US'
+          ? 'US SEC Climate Disclosure Report'
+          : 'Multi-Jurisdictional Compliance Report';
       pdf.text(title, margin, yPosition);
       yPosition += 25;
 
@@ -129,10 +101,14 @@ export const ComplianceReportGenerator: React.FC = () => {
       yPosition += 15;
 
       const executiveSummary = `This report presents compliance status with ${
-        jurisdiction === 'EU' ? 'EU Emission Reporting Standards' :
-        jurisdiction === 'US' ? 'US SEC Climate-Related Disclosure requirements' :
-        'EU and US regulatory frameworks'
-      } for the reporting period ${report.reportingPeriod.startDate} to ${report.reportingPeriod.endDate}. The assessment covers ${report.facilities.length} facilities with total verified emissions of ${report.aggregatedData.totalCO2Emissions.toLocaleString()} tonnes CO2 equivalent. All facilities demonstrate compliance with applicable regulatory requirements.`;
+        jurisdiction === 'EU'
+          ? 'EU Emission Reporting Standards'
+          : jurisdiction === 'US'
+          ? 'US SEC Climate-Related Disclosure requirements'
+          : 'EU and US regulatory frameworks'
+      } for the reporting period ${report.reportingPeriod.startDate} to ${report.reportingPeriod.endDate}. The assessment covers ${
+        report.facilities.length
+      } facilities with total verified emissions of ${report.aggregatedData.totalCO2Emissions.toLocaleString()} tonnes CO2 equivalent. All facilities demonstrate compliance with applicable regulatory requirements.`;
 
       yPosition = addWrappedText(executiveSummary, margin, yPosition, contentWidth, 11);
       yPosition += 15;
@@ -159,7 +135,7 @@ Renewable Energy Share: ${report.aggregatedData.renewableEnergyShare}%`;
       pdf.text('Facilities Overview', margin, yPosition);
       yPosition += 15;
 
-      report.facilities.forEach((facility, index) => {
+      report.facilities.forEach((facility) => {
         if (yPosition > pageHeight - 50) {
           pdf.addPage();
           yPosition = margin;
@@ -181,7 +157,7 @@ Compliance Status: ${facility.complianceStatus.toUpperCase()}`;
         yPosition += 10;
       });
 
-      // Add jurisdiction-specific sections
+      // Jurisdiction-specific sections
       if (jurisdiction === 'US' || jurisdiction === 'COMBINED') {
         if (yPosition > pageHeight - 100) {
           pdf.addPage();
@@ -228,7 +204,6 @@ Data Act Compliance: Data interoperability and portability implemented`;
       // Save PDF
       const fileName = `${jurisdiction.toLowerCase()}_compliance_report_${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(fileName);
-
     } catch (error) {
       console.error('Error generating report:', error);
       alert('Error generating report. Please try again.');
@@ -254,9 +229,7 @@ Data Act Compliance: Data interoperability and portability implemented`;
       <div className="space-y-4">
         {/* Jurisdiction Selector */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Reporting Jurisdiction
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Reporting Jurisdiction</label>
           <div className="flex space-x-3">
             <button
               onClick={() => setJurisdiction('EU')}
@@ -331,17 +304,13 @@ Data Act Compliance: Data interoperability and portability implemented`;
             <Database className="w-4 h-4" />
             <span>Data export available in JSON, CSV, XML formats</span>
           </div>
-          
+
           <button
             onClick={handleGenerateReport}
             disabled={isGenerating}
             className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white px-6 py-2 rounded-lg font-medium transition-colors"
           >
-            {isGenerating ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Download className="w-4 h-4" />
-            )}
+            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             <span>{isGenerating ? 'Generating...' : 'Generate PDF Report'}</span>
           </button>
         </div>
