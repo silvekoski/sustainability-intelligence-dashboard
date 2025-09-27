@@ -49,7 +49,7 @@ function App() {
               }>
                 <Route index element={<Navigate to="/dashboard" replace />} />
                 <Route path="dashboard" element={<Dashboard />} />
-                <Route path="settings" element={<div className="p-8 text-center">Settings temporarily disabled</div>} />
+                <Route path="settings" element={<ProfileSettings />} />
               </Route>
 
               {/* Catch all route */}
