@@ -5,14 +5,12 @@ import { Link } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { loginSchema } from '../../utils/validation';
-import { LoginCredentials, AuthError } from '../../types/auth';
+import { LoginCredentials } from '../../types/auth';
 
 export const LoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [authError, setAuthError] = useState<AuthError | null>(null);
-  const [resendSuccess, setResendSuccess] = useState(false);
-  const [resendLoading, setResendLoading] = useState(false);
-  const { login, loading, resendConfirmation } = useAuth();
+  const [authError, setAuthError] = useState<string | null>(null);
+  const { login, loading } = useAuth();
 
   const {
     register,
@@ -24,29 +22,13 @@ export const LoginForm: React.FC = () => {
 
   const onSubmit = async (data: LoginCredentials) => {
     setAuthError(null);
-    setResendSuccess(false);
     const { error } = await login(data.email, data.password);
     
     if (error) {
-      setAuthError(error);
+      setAuthError(error.message);
     }
   };
 
-  const handleResendConfirmation = async () => {
-    const email = (document.getElementById('email') as HTMLInputElement)?.value;
-    if (!email) return;
-
-    setResendLoading(true);
-    const { error } = await resendConfirmation(email);
-    setResendLoading(false);
-
-    if (error) {
-      setAuthError(error);
-    } else {
-      setResendSuccess(true);
-      setAuthError(null);
-    }
-  };
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -74,39 +56,7 @@ export const LoginForm: React.FC = () => {
           {authError && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-3">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="text-sm text-red-700">{authError.message}</p>
-                {authError.code === 'email_not_confirmed' && (
-                  <button
-                    type="button"
-                    onClick={handleResendConfirmation}
-                    disabled={resendLoading}
-                    className="mt-2 text-sm font-medium text-green-600 hover:text-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {resendLoading ? (
-                      <>
-                        <Loader2 className="w-3 h-3 mr-1 animate-spin inline" />
-                        Sending...
-                      </>
-                    ) : (
-                      'Resend confirmation email'
-                    )}
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {resendSuccess && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center space-x-3">
-              <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <p className="text-sm text-green-700">
-                Confirmation email sent! Please check your inbox and click the verification link.
-              </p>
+              <p className="text-sm text-red-700">{authError}</p>
             </div>
           )}
 

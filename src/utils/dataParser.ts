@@ -54,30 +54,20 @@ export const calculatePlantSummaries = (data: PowerPlantData[]): PlantSummary[] 
 };
 
 export const calculateEmissionsTrends = (data: PowerPlantData[]): EmissionsTrend[] => {
-  // Group data by date (daily aggregation)
   const dateGroups = data.reduce((acc, record) => {
-    const dateOnly = record.date.split(' ')[0]; // Extract date part (YYYY-MM-DD)
-    if (!acc[dateOnly]) {
-      acc[dateOnly] = [];
+    const date = record.date.split(' ')[0]; // Get just the date part
+    if (!acc[date]) {
+      acc[date] = [];
     }
-    acc[dateOnly].push(record);
+    acc[date].push(record);
     return acc;
   }, {} as Record<string, PowerPlantData[]>);
 
-  // Convert to array and sort by date to ensure proper daily sequence
-  return Object.entries(dateGroups)
-    .sort(([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime())
-    .map(([date, records]) => {
-      const dailyCO2 = records.reduce((sum, r) => sum + r.CO2_emissions_tonnes, 0);
-      const dailyCH4 = records.reduce((sum, r) => sum + r.CH4_emissions_kg, 0) / 1000; // Convert to tonnes
-      const dailyN2O = records.reduce((sum, r) => sum + r.N2O_emissions_kg, 0) / 1000; // Convert to tonnes
-      
-      return {
-        date,
-        CO2: dailyCO2,
-        CH4: dailyCH4,
-        N2O: dailyN2O,
-        total: dailyCO2 + dailyCH4 + dailyN2O
-      };
-    });
+  return Object.entries(dateGroups).map(([date, records]) => ({
+    date,
+    CO2: records.reduce((sum, r) => sum + r.CO2_emissions_tonnes, 0),
+    CH4: records.reduce((sum, r) => sum + r.CH4_emissions_kg, 0) / 1000, // Convert to tonnes
+    N2O: records.reduce((sum, r) => sum + r.N2O_emissions_kg, 0) / 1000, // Convert to tonnes
+    total: records.reduce((sum, r) => sum + r.CO2_emissions_tonnes + (r.CH4_emissions_kg + r.N2O_emissions_kg) / 1000, 0)
+  }));
 };

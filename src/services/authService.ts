@@ -224,45 +224,7 @@ export class AuthService {
 
   // Format error messages
   private static formatError(error: any): AuthError {
-    // Handle Supabase auth errors with specific codes
-    if (error.message === 'Email not confirmed') {
-      return {
-        message: 'Please check your email and click the confirmation link to verify your account.',
-        code: 'email_not_confirmed'
-      };
-    }
-
-    // Handle other common auth errors
-    if (error.message === 'Invalid login credentials') {
-      return {
-        message: 'Invalid email or password. Please check your credentials and try again.'
-      };
-    }
-
-    if (error.message === 'User already registered') {
-      return {
-        message: 'An account with this email already exists. Please try logging in instead.'
-      };
-    }
-
-    // Default error handling
-    return {
-      message: error.message || 'An unexpected error occurred. Please try again.'
-    };
-  }
-
-  // Resend email confirmation
-  static async resendConfirmation(email: string) {
-    try {
-      const { data, error } = await supabase.auth.resend({
-        type: 'signup',
-        email: email,
-      });
-
-      if (error) throw error;
-      return { data, error: null };
-    } catch (error: any) {
-      return { data: null, error: this.formatError(error) };
+    if (error.message) {
     }
   }
   // Validate password strength
