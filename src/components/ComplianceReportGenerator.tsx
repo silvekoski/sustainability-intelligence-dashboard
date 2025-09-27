@@ -108,6 +108,22 @@ export const ComplianceReportGenerator: React.FC<ComplianceReportGeneratorProps>
       const contentWidth = pageWidth - 2 * margin;
       let yPosition = margin;
 
+      // Add logo (if available)
+      try {
+        // Try to add logo - this will work if the logo is accessible
+        const logoImg = new Image();
+        logoImg.src = '/esboost-logo.svg';
+        // For now, we'll add a text-based logo since SVG handling in jsPDF can be complex
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(34, 197, 94); // Green color
+        pdf.text('ESBoost', margin, yPosition);
+        pdf.setTextColor(0, 0, 0); // Reset to black
+        yPosition += 15;
+      } catch (error) {
+        console.warn('Could not load logo:', error);
+      }
+
       // Title
       pdf.setFontSize(20);
       pdf.setFont('helvetica', 'bold');
