@@ -332,6 +332,7 @@ export class ComplianceReportService {
     return {
       title: data.secDisclosure ? 'Multi-Jurisdictional Emission Reporting Standards (2025)' : 'EU Emission Reporting Standards (2025)',
       executiveSummary: this.generateExecutiveSummary(data),
+      reportingPeriod: data.reportingPeriod,
       sections,
       conclusion: this.generateConclusion(data),
       generatedAt: new Date().toISOString(),
