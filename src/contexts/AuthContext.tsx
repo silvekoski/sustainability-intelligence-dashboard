@@ -124,6 +124,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       loading: false,
       initialized: true,
     });
+  const resendConfirmation = async (email: string) => {
+    return await AuthService.resendConfirmation(email);
+  };
+
   };
 
   const resetPassword = async (email: string) => {
@@ -187,6 +191,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     register,
     logout,
+    resendConfirmation,
     resetPassword,
     updatePassword,
     updateProfile,

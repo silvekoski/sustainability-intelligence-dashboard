@@ -9,12 +9,15 @@ import { LoginCredentials } from '../../types/auth';
 
 export const LoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
-  const { login, loading } = useAuth();
+  const [authError, setAuthError] = useState<AuthError | null>(null);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
+  const { login, loading, resendConfirmation } = useAuth();
 
   const {
     register,
     handleSubmit,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<LoginCredentials>({
     resolver: yupResolver(loginSchema),
@@ -25,8 +28,31 @@ export const LoginForm: React.FC = () => {
     const { error } = await login(data.email, data.password);
     
     if (error) {
-      setAuthError(error.message);
+      setAuthError(error);
     }
+  };
+
+  const handleResendConfirmation = async () => {
+    setResendLoading(true);
+    setResendSuccess(false);
+    
+    const email = getValues('email');
+    if (!email) {
+      setAuthError({ message: 'Please enter your email address first' });
+      setResendLoading(false);
+      return;
+    }
+
+    const { error } = await resendConfirmation(email);
+    
+    if (error) {
+      setAuthError(error);
+    } else {
+      setResendSuccess(true);
+      setAuthError(null);
+    }
+    
+    setResendLoading(false);
   };
 
   return (
@@ -56,7 +82,39 @@ export const LoginForm: React.FC = () => {
           {authError && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-3">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-              <p className="text-sm text-red-700">{authError}</p>
+              <div className="flex-1">
+                <p className="text-sm text-red-700">{authError.message}</p>
+                {authError.code === 'email_not_confirmed' && (
+                  <button
+                    type="button"
+                    onClick={handleResendConfirmation}
+                    disabled={resendLoading}
+                    className="mt-2 text-sm font-medium text-green-600 hover:text-green-500 disabled:opacity-50"
+                  >
+                    {resendLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-1 animate-spin inline" />
+                        Sending...
+                      </>
+                    ) : (
+                      'Resend confirmation email'
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {resendSuccess && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center space-x-3">
+              <div className="w-5 h-5 text-green-500 flex-shrink-0">
+                <svg fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <p className="text-sm text-green-700">
+                Confirmation email sent! Please check your inbox and click the confirmation link.
+              </p>
             </div>
           )}
 
