@@ -130,32 +130,34 @@ Renewable Energy Share: ${report.aggregatedData.renewableEnergyShare}%`;
       yPosition += 15;
 
       // Facilities Overview
-      pdf.setFontSize(16);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Facilities Overview', margin, yPosition);
-      yPosition += 15;
-
-      report.facilities.forEach((facility) => {
-        if (yPosition > pageHeight - 50) {
-          pdf.addPage();
-          yPosition = margin;
-        }
-
-        pdf.setFontSize(12);
+      if (report.facilities && report.facilities.length > 0) {
+        pdf.setFontSize(16);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(`${facility.name}`, margin, yPosition);
-        yPosition += 10;
+        pdf.text('Facilities Overview', margin, yPosition);
+        yPosition += 15;
 
-        const facilityText = `Location: ${facility.location}
+        report.facilities.forEach((facility) => {
+          if (yPosition > pageHeight - 50) {
+            pdf.addPage();
+            yPosition = margin;
+          }
+
+          pdf.setFontSize(12);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(`${facility.name}`, margin, yPosition);
+          yPosition += 10;
+
+          const facilityText = `Location: ${facility.location}
 Sector: ${facility.sector}
 Total Emissions: ${facility.totalEmissions.toLocaleString()} tonnes CO2
 Verified Emissions: ${facility.verifiedEmissions.toLocaleString()} tonnes CO2
 Allowances Allocated: ${facility.allowancesAllocated.toLocaleString()}
 Compliance Status: ${facility.complianceStatus.toUpperCase()}`;
 
-        yPosition = addWrappedText(facilityText, margin, yPosition, contentWidth, 10);
-        yPosition += 10;
-      });
+          yPosition = addWrappedText(facilityText, margin, yPosition, contentWidth, 10);
+          yPosition += 10;
+        });
+      }
 
       // Jurisdiction-specific sections
       if (jurisdiction === 'US' || jurisdiction === 'COMBINED') {
