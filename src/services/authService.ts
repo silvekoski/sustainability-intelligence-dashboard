@@ -225,6 +225,8 @@ export class AuthService {
   // Format error messages
   private static formatError(error: any): AuthError {
     if (error.message) {
+    }
+  }
   // Validate password strength
   static validatePasswordStrength(password: string): { isValid: boolean; message?: string } {
     if (password.length < 8) {
