@@ -4,6 +4,7 @@ import { PlantStatusCard } from '../components/PlantStatusCard';
 import { EmissionsChart } from '../components/EmissionsChart';
 import { EfficiencyGauge } from '../components/EfficiencyGauge';
 import { FactoryComparisonPanel } from '../components/FactoryComparisonPanel';
+import { PermitsStatusWidget } from '../components/PermitsStatusWidget';
 import { useData } from '../hooks/useData';
 import { 
   Zap, 
@@ -45,6 +46,16 @@ export const Dashboard: React.FC = () => {
   const optimalPlants = plantSummaries.filter(p => p.status === 'optimal').length;
   const warningPlants = plantSummaries.filter(p => p.status === 'warning').length;
   const criticalPlants = plantSummaries.filter(p => p.status === 'critical').length;
+
+  // Sample permits data - replace with real data from your backend
+  const permitsData = {
+    active_permits: 5,
+    avg_consumption_rate_t_per_month: 32000,
+    current_date: new Date().toISOString(),
+    target_buffer_months: 12,
+    warning_threshold_pct: 80,
+    cumulative_emissions_t: 256000 // Optional: current emissions to date
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
@@ -116,9 +127,13 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Charts and Analytics */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-8">
         <div className="lg:col-span-2">
           <EmissionsChart data={emissionsTrends} />
+        </div>
+        
+        <div>
+          <PermitsStatusWidget data={permitsData} />
         </div>
         
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
