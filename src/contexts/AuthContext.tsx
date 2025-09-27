@@ -41,14 +41,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const initializeAuth = async () => {
       try {
-        console.log('[AuthContext] Initializing auth...');
+        console.log('[AuthContext] Starting auth initialization...');
         // Get initial session
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!mounted) return;
 
         if (session?.user) {
-          console.log('[AuthContext] User found, fetching profile...');
+          console.log('[AuthContext] Session found for user:', session.user.id);
           // User is authenticated, try to fetch profile
           let profile = null;
           try {
@@ -59,17 +59,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
               .single();
             
             if (error) {
-              console.error('[AuthContext] Profile fetch error:', error);
+              console.warn('[AuthContext] Profile fetch error:', error.message);
             } else {
-              console.log('[AuthContext] Profile fetched:', data);
+              console.log('[AuthContext] Profile loaded successfully');
             }
             profile = data;
           } catch (error) {
-            console.error('[AuthContext] Profile fetch exception:', error);
+            console.warn('[AuthContext] Profile fetch exception:', error);
           }
 
           if (mounted) {
-            console.log('[AuthContext] Setting user and profile state');
+            console.log('[AuthContext] Setting authenticated state');
             setState({
               user: session.user as AuthUser,
               profile,
@@ -78,7 +78,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             });
           }
         } else {
-          console.log('[AuthContext] No user session found');
+          console.log('[AuthContext] No active session found');
           // No user session
           if (mounted) {
             setState({
@@ -90,7 +90,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           }
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        console.error('[AuthContext] Initialization error:', error);
         if (mounted) {
           setState({
             user: null,
@@ -102,20 +102,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     };
 
-    // Initialize with a small delay to prevent race conditions
-    const timer = setTimeout(initializeAuth, 100);
+    // Initialize immediately
+    initializeAuth();
 
     // Listen for auth changes
     const { data } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
 
-        console.log('Auth state change:', event, !!session?.user);
+        console.log('[AuthContext] Auth state change:', event, !!session?.user);
 
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
           setState(prev => ({ ...prev, loading: true }));
           
-          console.log('[AuthContext] Auth state change - fetching profile for user:', session.user.id);
+          console.log('[AuthContext] Fetching profile after auth change');
           // Fetch user profile
           let profile = null;
           try {
@@ -126,10 +126,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
               .single();
             
             if (error) {
-              console.error('[AuthContext] Profile fetch error in auth change:', error);
+              console.warn('[AuthContext] Profile fetch error:', error.message);
               // If profile doesn't exist, try to create it
               if (error.code === 'PGRST116') {
-                console.log('[AuthContext] Profile not found, creating...');
+                console.log('[AuthContext] Creating missing profile...');
                 try {
                   const { data: newProfile, error: createError } = await supabase
                     .from('profiles')
@@ -143,9 +143,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     .single();
                   
                   if (createError) {
-                    console.error('[AuthContext] Failed to create profile:', createError);
+                    console.error('[AuthContext] Profile creation failed:', createError.message);
                   } else {
-                    console.log('[AuthContext] Profile created:', newProfile);
+                    console.log('[AuthContext] Profile created successfully');
                     profile = newProfile;
                   }
                 } catch (insertError) {
@@ -153,16 +153,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 }
               }
             } else {
-              console.log('[AuthContext] Profile fetched in auth change:', data);
+              console.log('[AuthContext] Profile loaded in auth change');
               profile = data;
             }
-            profile = data;
           } catch (error: any) {
-            console.error('[AuthContext] Profile fetch exception in auth change:', error);
+            console.error('[AuthContext] Profile fetch exception:', error);
           }
 
           if (mounted) {
-            console.log('[AuthContext] Setting state after auth change');
+            console.log('[AuthContext] Updating state after auth change');
             setState({
               user: session.user as AuthUser,
               profile,
@@ -171,7 +170,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             });
           }
         } else if (event === 'SIGNED_OUT') {
-          console.log('[AuthContext] User signed out');
+          console.log('[AuthContext] Processing sign out');
           if (mounted) {
             setState({
               user: null,
@@ -186,7 +185,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     return () => {
       mounted = false;
-      clearTimeout(timer);
       if (data && data.subscription && typeof data.subscription.unsubscribe === 'function') {
         data.subscription.unsubscribe();
       }
