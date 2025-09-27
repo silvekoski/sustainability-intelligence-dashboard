@@ -71,3 +71,19 @@ export const calculateEmissionsTrends = (data: PowerPlantData[]): EmissionsTrend
     total: records.reduce((sum, r) => sum + r.CO2_emissions_tonnes + (r.CH4_emissions_kg + r.N2O_emissions_kg) / 1000, 0)
   }));
 };
+// Calculate aggregated metrics for the entire dataset
+export const calculateAggregatedMetrics = (data: PowerPlantData[]) => {
+  const totalElectricity = data.reduce((sum, d) => sum + d.electricity_output_MWh, 0);
+  const totalEmissions = data.reduce((sum, d) => sum + d.CO2_emissions_tonnes, 0);
+  const totalFuelConsumption = data.reduce((sum, d) => sum + d.fuel_consumption_MWh, 0);
+  const avgEfficiency = data.length > 0 
+    ? data.reduce((sum, d) => sum + d.efficiency_percent, 0) / data.length 
+    : 0;
+
+  return {
+    totalElectricity: Math.round(totalElectricity),
+    totalEmissions: Math.round(totalEmissions),
+    totalFuelConsumption: Math.round(totalFuelConsumption),
+    avgEfficiency: Math.round(avgEfficiency * 10) / 10 // Round to 1 decimal
+  };
+};

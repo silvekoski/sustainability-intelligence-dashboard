@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { PowerPlantData, PlantSummary, EmissionsTrend } from '../types';
-import { parseCSVData, calculatePlantSummaries, calculateEmissionsTrends } from '../utils/dataParser';
+import { parseCSVData, calculatePlantSummaries, calculateEmissionsTrends, calculateAggregatedMetrics } from '../utils/dataParser';
 
 export const useData = () => {
   const [data, setData] = useState<PowerPlantData[]>([]);
@@ -33,12 +33,7 @@ export const useData = () => {
     loadData();
   }, []);
 
-  const totalElectricity = data.reduce((sum, d) => sum + d.electricity_output_MWh, 0);
-  const totalEmissions = data.reduce((sum, d) => sum + d.CO2_emissions_tonnes, 0);
-  const avgEfficiency = data.length > 0 
-    ? data.reduce((sum, d) => sum + d.efficiency_percent, 0) / data.length 
-    : 0;
-  const totalFuelConsumption = data.reduce((sum, d) => sum + d.fuel_consumption_MWh, 0);
+  const metrics = calculateAggregatedMetrics(data);
 
   return {
     data,
@@ -46,11 +41,6 @@ export const useData = () => {
     emissionsTrends,
     loading,
     error,
-    metrics: {
-      totalElectricity,
-      totalEmissions,
-      avgEfficiency,
-      totalFuelConsumption
-    }
+    metrics
   };
 };

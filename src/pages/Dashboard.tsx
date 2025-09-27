@@ -166,7 +166,14 @@ export const Dashboard: React.FC = () => {
             <Leaf className="w-6 h-6 text-green-600" />
           </div>
           <div>
-            <h3 className="text-xl font-semibold text-gray-900">Sustainability Insights</h3>
+            <PermitsStatusWidget data={{
+              active_permits: 17,
+              avg_consumption_rate_t_per_month: Math.round(metrics.totalEmissions / 2 * 30), // Estimate monthly rate
+              current_date: new Date().toISOString(),
+              target_buffer_months: 12,
+              warning_threshold_pct: 80,
+              cumulative_emissions_t: metrics.totalEmissions
+            }} />
             <p className="text-gray-600">AI-powered recommendations for optimization</p>
           </div>
         </div>

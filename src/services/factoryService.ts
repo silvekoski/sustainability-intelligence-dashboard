@@ -1,51 +1,54 @@
 import { supabase } from '../lib/supabase';
 import { FactoryData, FactoryBenchmarks, FactoryAnalysis, ComplianceStatus, ComplianceCheck, FactoryComparisonData } from '../types/factory';
+import { parseCSVData, calculateAggregatedMetrics } from '../utils/dataParser';
 
 export class FactoryService {
   // Fetch factory data from Supabase
   static async getFactoryData(): Promise<FactoryData[]> {
     try {
-      // Mock data for now - replace with actual Supabase queries
-      const mockData: FactoryData[] = [
-        {
-          id: '1',
-          factory_name: 'Alpha Power Station',
-          efficiency_pct: 38,
-          emissions_gCO2_per_kWh: 820,
-          output_MWh: 2156,
-          location: 'Germany',
-          total_co2_tonnes: 1768
-        },
-        {
-          id: '2',
-          factory_name: 'Beta Energy Facility',
-          efficiency_pct: 45,
-          emissions_gCO2_per_kWh: 350,
-          output_MWh: 1618,
-          location: 'Netherlands',
-          total_co2_tonnes: 566
-        },
-        {
-          id: '3',
-          factory_name: 'Gamma CHP Plant',
-          efficiency_pct: 80,
-          emissions_gCO2_per_kWh: 200,
-          output_MWh: 1083,
-          location: 'Denmark',
-          total_co2_tonnes: 217
-        },
-        {
-          id: '4',
-          factory_name: 'Delta Dual-Fuel Plant',
-          efficiency_pct: 50,
-          emissions_gCO2_per_kWh: 450,
-          output_MWh: 1298,
-          location: 'France',
-          total_co2_tonnes: 584
+      // Load data from CSV file
+      const response = await fetch('/sample_data.csv');
+      if (!response.ok) {
+        throw new Error('Failed to load CSV data');
+      }
+      
+      const csvText = await response.text();
+      const parsedData = parseCSVData(csvText);
+      
+      // Group data by plant and calculate aggregated metrics
+      const plantGroups = parsedData.reduce((acc, record) => {
+        if (!acc[record.plant_id]) {
+          acc[record.plant_id] = [];
         }
-      ];
+        acc[record.plant_id].push(record);
+        return acc;
+      }, {} as Record<number, any[]>);
 
-      return mockData;
+      const factoryData: FactoryData[] = Object.values(plantGroups).map((plantData: any[]) => {
+        const first = plantData[0];
+        const totalElectricity = plantData.reduce((sum, d) => sum + d.electricity_output_MWh, 0);
+        const totalEmissions = plantData.reduce((sum, d) => sum + d.CO2_emissions_tonnes, 0);
+        const avgEfficiency = plantData.reduce((sum, d) => sum + d.efficiency_percent, 0) / plantData.length;
+        
+        // Calculate emissions intensity (gCO2/kWh)
+        const emissionsIntensity = totalElectricity > 0 ? (totalEmissions * 1000) / totalElectricity : 0;
+        
+        // Assign locations based on plant characteristics
+        const locations = ['Germany', 'Netherlands', 'Denmark', 'France'];
+        const location = locations[first.plant_id - 1] || 'Europe';
+
+        return {
+          id: first.plant_id.toString(),
+          factory_name: first.plant_name,
+          efficiency_pct: Math.round(avgEfficiency * 10) / 10,
+          emissions_gCO2_per_kWh: Math.round(emissionsIntensity),
+          output_MWh: Math.round(totalElectricity),
+          location,
+          total_co2_tonnes: Math.round(totalEmissions)
+        };
+      });
+
+      return factoryData;
     } catch (error) {
       console.error('Error fetching factory data:', error);
       return [];
