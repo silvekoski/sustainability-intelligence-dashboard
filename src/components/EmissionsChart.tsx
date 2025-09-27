@@ -10,7 +10,7 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">Emissions Trend</h3>
+        <h3 className="text-lg font-semibold text-gray-900">Daily Emissions Trend</h3>
         <div className="flex items-center space-x-4 text-sm">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-red-500 rounded-full" />

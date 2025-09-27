@@ -63,7 +63,9 @@ export const calculateEmissionsTrends = (data: PowerPlantData[]): EmissionsTrend
     return acc;
   }, {} as Record<string, PowerPlantData[]>);
 
-  return Object.entries(dateGroups).map(([date, records]) => ({
+  return Object.entries(dateGroups)
+    .sort(([a], [b]) => a.localeCompare(b)) // Sort by date
+    .map(([date, records]) => ({
     date,
     CO2: records.reduce((sum, r) => sum + r.CO2_emissions_tonnes, 0),
     CH4: records.reduce((sum, r) => sum + r.CH4_emissions_kg, 0) / 1000, // Convert to tonnes
