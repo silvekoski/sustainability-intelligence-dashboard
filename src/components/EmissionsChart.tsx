@@ -10,7 +10,12 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">Emissions Trend</h3>
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">Daily Emissions Trend</h3>
+          <p className="text-sm text-gray-500 mt-1">
+            Daily aggregated emissions across all power plants
+          </p>
+        </div>
         <div className="flex items-center space-x-4 text-sm">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-red-500 rounded-full" />
@@ -27,7 +32,7 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
         </div>
       </div>
       
-      <div className="h-64 flex items-end justify-between space-x-2">
+      <div className="h-64 flex items-end justify-between space-x-1">
         {data.map((item, index) => {
           const co2Height = (item.CO2 / maxValue) * 100;
           const ch4Height = (item.CH4 / maxValue) * 100;
@@ -39,23 +44,23 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
                 <div 
                   className="w-full bg-red-500 rounded-t-sm transition-all hover:bg-red-600"
                   style={{ height: `${co2Height}%` }}
-                  title={`CO₂: ${item.CO2.toFixed(1)} tonnes`}
+                  title={`${item.date} - CO₂: ${item.CO2.toFixed(1)} tonnes/day`}
                 />
                 <div 
                   className="w-full bg-orange-500 transition-all hover:bg-orange-600"
                   style={{ height: `${ch4Height}%` }}
-                  title={`CH₄: ${item.CH4.toFixed(3)} tonnes`}
+                  title={`${item.date} - CH₄: ${item.CH4.toFixed(3)} tonnes/day`}
                 />
                 <div 
                   className="w-full bg-yellow-500 rounded-b-sm transition-all hover:bg-yellow-600"
                   style={{ height: `${n2oHeight}%` }}
-                  title={`N₂O: ${item.N2O.toFixed(3)} tonnes`}
+                  title={`${item.date} - N₂O: ${item.N2O.toFixed(3)} tonnes/day`}
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-2 text-center">
+              <p className="text-xs text-gray-500 mt-2 text-center transform -rotate-45 origin-center">
                 {new Date(item.date).toLocaleDateString('en-US', { 
                   month: 'short', 
-                  day: 'numeric' 
+                  day: 'numeric'
                 })}
               </p>
             </div>
@@ -64,24 +69,29 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
       </div>
       
       <div className="mt-4 pt-4 border-t border-gray-200">
+        <div className="mb-3 text-center">
+          <p className="text-sm text-gray-600">
+            Date Range: {data.length > 0 ? `${new Date(data[0].date).toLocaleDateString()} - ${new Date(data[data.length - 1].date).toLocaleDateString()}` : 'No data'}
+          </p>
+        </div>
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <p className="text-2xl font-bold text-red-600">
               {data.reduce((sum, d) => sum + d.CO2, 0).toFixed(0)}
             </p>
-            <p className="text-sm text-gray-500">Total CO₂ (tonnes)</p>
+            <p className="text-sm text-gray-500">Total CO₂ (tonnes/period)</p>
           </div>
           <div>
             <p className="text-2xl font-bold text-orange-600">
               {data.reduce((sum, d) => sum + d.CH4, 0).toFixed(2)}
             </p>
-            <p className="text-sm text-gray-500">Total CH₄ (tonnes)</p>
+            <p className="text-sm text-gray-500">Total CH₄ (tonnes/period)</p>
           </div>
           <div>
             <p className="text-2xl font-bold text-yellow-600">
               {data.reduce((sum, d) => sum + d.N2O, 0).toFixed(2)}
             </p>
-            <p className="text-sm text-gray-500">Total N₂O (tonnes)</p>
+            <p className="text-sm text-gray-500">Total N₂O (tonnes/period)</p>
           </div>
         </div>
       </div>
