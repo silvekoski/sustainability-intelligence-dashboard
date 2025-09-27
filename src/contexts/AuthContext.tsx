@@ -96,7 +96,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const timer = setTimeout(initializeAuth, 100);
 
     // Listen for auth changes
-    const { data: subscription } = supabase.auth.onAuthStateChange(
+    const { data } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
 
@@ -160,7 +160,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => {
       mounted = false;
       clearTimeout(timer);
-      subscription?.unsubscribe();
+      if (data && data.subscription && typeof data.subscription.unsubscribe === 'function') {
+        data.subscription.unsubscribe();
+      }
     };
   }, []);
 
