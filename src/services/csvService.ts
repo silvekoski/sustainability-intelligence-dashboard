@@ -210,7 +210,7 @@ export class CSVService {
         date: values[0],
         plant_id: parseInt(values[1]),
         plant_name: values[2],
-        fuel_type: values[3],
+        fuel_type: values[3] || '',
         electricity_output_MWh: parseFloat(values[4]),
         heat_output_MWh: parseFloat(values[5]),
         fuel_consumption_MWh: parseFloat(values[6]),
