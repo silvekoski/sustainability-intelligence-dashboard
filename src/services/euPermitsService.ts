@@ -27,10 +27,10 @@ export class EUPermitsService {
         .select('*')
         .eq('user_id', userId)
         .eq('permit_year', currentYear)
-        .single();
+        .limit(1);
 
-      if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "not found"
-      return { data: error?.code === 'PGRST116' ? null : data, error: null };
+      if (error) throw error;
+      return { data: data && data.length > 0 ? data[0] : null, error: null };
     } catch (error: any) {
       return { data: null, error: this.formatError(error) };
     }
