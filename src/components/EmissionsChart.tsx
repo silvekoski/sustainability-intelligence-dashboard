@@ -30,9 +30,9 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
   // Enhanced color scheme
   const colors = {
     CO2: {
-      primary: '#ef4444',
-      light: '#fca5a5',
-      bg: '#fef2f2'
+      primary: '#3b82f6',
+      light: '#93c5fd',
+      bg: '#eff6ff'
     },
     CH4: {
       primary: '#f97316',
