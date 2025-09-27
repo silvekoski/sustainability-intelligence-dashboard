@@ -60,81 +60,81 @@ export const Dashboard: React.FC = () => {
   // Sample factory data for comparison - in a real application, this would come from your backend
   const factoryData = [
     {
-      factory_name: "Alpha Power Station",
-      efficiency_pct: 38.0,
+      factory_name: "Wärtsilä Vaasa Power Plant",
+      efficiency_pct: 42.0,
       emissions_gCO2_per_kWh: 820,
-      output_MWh: 2156,
-      location: "North Region"
+      output_MWh: 2156, 
+      location: "Vaasa, Finland"
     },
     {
-      factory_name: "Beta Energy Facility", 
-      efficiency_pct: 45.0,
+      factory_name: "Wärtsilä Santos Power Plant",
+      efficiency_pct: 48.0,
       emissions_gCO2_per_kWh: 350,
       output_MWh: 1618,
-      location: "Central Region"
+      location: "Santos, Brazil"
     },
     {
-      factory_name: "Gamma CHP Plant",
-      efficiency_pct: 80.0,
+      factory_name: "Wärtsilä Jordan Power Plant",
+      efficiency_pct: 46.0,
       emissions_gCO2_per_kWh: 200,
       output_MWh: 1079,
-      location: "South Region"
+      location: "Amman, Jordan"
     },
     {
-      factory_name: "Delta Dual-Fuel Plant",
-      efficiency_pct: 50.0,
+      factory_name: "Wärtsilä Singapore Power Plant",
+      efficiency_pct: 52.0,
       emissions_gCO2_per_kWh: 420,
       output_MWh: 1295,
-      location: "East Region"
+      location: "Jurong Island, Singapore"
     }
   ];
 
   // Sample satellite heat data - in a real application, this would come from satellite imagery processing
   const satelliteHeatData = [
     {
-      factory_name: "Alpha Power Station",
-      latitude: 52.5200,
-      longitude: 13.4050,
+      factory_name: "Wärtsilä Vaasa Power Plant",
+      latitude: 63.0960,
+      longitude: 21.6158,
       output_MWh: 2156,
-      thermal_value: 45.2,
-      baseline_temp: 18.5,
-      heat_index: 8.5,
+      thermal_value: 42.8,
+      baseline_temp: 5.2,
+      heat_index: 7.8,
       efficiency_rank: 4,
       status: 'red' as const,
       status_emoji: '🔴'
     },
     {
-      factory_name: "Beta Energy Facility",
-      latitude: 48.8566,
-      longitude: 2.3522,
+      factory_name: "Wärtsilä Santos Power Plant",
+      latitude: -23.9608,
+      longitude: -46.3331,
       output_MWh: 1618,
-      thermal_value: 32.1,
-      baseline_temp: 16.8,
-      heat_index: 5.1,
+      thermal_value: 35.4,
+      baseline_temp: 24.1,
+      heat_index: 4.2,
       efficiency_rank: 2,
       status: 'yellow' as const,
       status_emoji: '🟡'
     },
     {
-      factory_name: "Gamma CHP Plant",
-      latitude: 41.9028,
-      longitude: 12.4964,
+      factory_name: "Wärtsilä Jordan Power Plant",
+      latitude: 31.9454,
+      longitude: 35.9284,
       output_MWh: 1079,
-      thermal_value: 25.3,
-      baseline_temp: 19.8,
-      heat_index: 2.7,
+      thermal_value: 38.7,
+      baseline_temp: 22.3,
+      heat_index: 3.8,
       efficiency_rank: 1,
       status: 'green' as const,
       status_emoji: '🟢'
     },
     {
-      factory_name: "Delta Dual-Fuel Plant",
-      latitude: 55.7558,
-      longitude: 37.6176,
+      factory_name: "Wärtsilä Singapore Power Plant",
+      latitude: 1.2644,
+      longitude: 103.6999,
       output_MWh: 1295,
-      thermal_value: 38.9,
-      baseline_temp: 12.4,
-      heat_index: 6.8,
+      thermal_value: 41.2,
+      baseline_temp: 28.5,
+      heat_index: 5.1,
       efficiency_rank: 3,
       status: 'yellow' as const,
       status_emoji: '🟡'
