@@ -39,15 +39,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     // Get initial session
     const getInitialSession = async () => {
+      setState(prev => ({ ...prev, loading: true }));
       try {
         const { data } = await AuthService.getSession();
         if (data.session?.user) {
           await handleUserSession(data.session.user as AuthUser);
+        } else {
+          setState({
+            user: null,
+            profile: null,
+            loading: false,
+            initialized: true,
+          });
         }
       } catch (error) {
         console.error('Error getting initial session:', error);
+        setState({
+          user: null,
+          profile: null,
+          loading: false,
+          initialized: true,
+        });
       } finally {
-        setState(prev => ({ ...prev, loading: false, initialized: true }));
+        // Ensure we're always initialized
+        setState(prev => ({ ...prev, initialized: true }));
       }
     };
 
@@ -56,17 +71,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          await handleUserSession(session.user as AuthUser);
-        } else if (event === 'SIGNED_OUT') {
+        try {
+          if (event === 'SIGNED_IN' && session?.user) {
+            await handleUserSession(session.user as AuthUser);
+          } else if (event === 'SIGNED_OUT') {
+            setState({
+              user: null,
+              profile: null,
+              loading: false,
+              initialized: true,
+            });
+          } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+            await handleUserSession(session.user as AuthUser);
+          }
+        } catch (error) {
+          console.error('Error handling auth state change:', error);
           setState({
             user: null,
             profile: null,
             loading: false,
             initialized: true,
           });
-        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-          await handleUserSession(session.user as AuthUser);
         }
       }
     );
@@ -75,17 +100,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const handleUserSession = async (user: AuthUser) => {
-    setState(prev => ({ ...prev, user, loading: true }));
-    
-    // Fetch user profile
-    const { data: profile } = await AuthService.getUserProfile(user.id);
-    
-    setState({
-      user,
-      profile,
-      loading: false,
-      initialized: true,
-    });
+    try {
+      setState(prev => ({ ...prev, user, loading: true }));
+      
+      // Fetch user profile
+      const { data: profile } = await AuthService.getUserProfile(user.id);
+      
+      setState({
+        user,
+        profile,
+        loading: false,
+        initialized: true,
+      });
+    } catch (error) {
+      console.error('Error handling user session:', error);
+      setState({
+        user,
+        profile: null,
+        loading: false,
+        initialized: true,
+      });
+    }
   };
 
   const login = async (email: string, password: string) => {

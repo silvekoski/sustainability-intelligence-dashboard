@@ -149,9 +149,12 @@ export class AuthService {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 is "not found" error, which is acceptable
+        throw error;
+      }
       return { data, error: null };
     } catch (error: any) {
       return { data: null, error: this.formatError(error) };
