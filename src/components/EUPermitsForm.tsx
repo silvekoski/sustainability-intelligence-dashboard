@@ -148,7 +148,10 @@ export const EUPermitsForm: React.FC = () => {
                   {...register('active_permits', {
                     required: 'Active permits count is required',
                     min: { value: 0, message: 'Must be a non-negative number' },
-                    validate: value => Number.isInteger(Number(value)) || 'Must be a whole number'
+                    validate: value => {
+                      const num = Number(value);
+                      return Number.isInteger(num) || 'Must be a whole number';
+                    }
                   })}
                   type="number"
                   min="0"
