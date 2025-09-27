@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { FileText, Download, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { FileText, Download, Loader2, CheckCircle, AlertCircle, FileDown } from 'lucide-react';
 import { ComplianceReportService } from '../services/complianceReportService';
 import { ComplianceReport } from '../types/compliance';
+import jsPDF from 'jspdf';
 
 export const ComplianceReportGenerator: React.FC = () => {
   const [report, setReport] = useState<ComplianceReport | null>(null);
   const [loading, setLoading] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const generateReport = async () => {
@@ -22,22 +24,86 @@ export const ComplianceReportGenerator: React.FC = () => {
     }
   };
 
-  const downloadReport = () => {
+  const downloadPDF = async () => {
     if (!report) return;
 
-    const reportContent = formatReportForDownload(report);
-    const blob = new Blob([reportContent], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `EU_Emission_Report_${new Date().toISOString().split('T')[0]}.md`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setDownloadingPdf(true);
+    
+    try {
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 20;
+      const lineHeight = 7;
+      let yPosition = margin;
+
+      // Helper function to add text with word wrapping
+      const addText = (text: string, fontSize: number = 10, isBold: boolean = false) => {
+        pdf.setFontSize(fontSize);
+        pdf.setFont('helvetica', isBold ? 'bold' : 'normal');
+        
+        const lines = pdf.splitTextToSize(text, pageWidth - 2 * margin);
+        
+        // Check if we need a new page
+        if (yPosition + (lines.length * lineHeight) > pageHeight - margin) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        
+        lines.forEach((line: string) => {
+          pdf.text(line, margin, yPosition);
+          yPosition += lineHeight;
+        });
+        
+        yPosition += 3; // Extra spacing after paragraphs
+      };
+
+      // Title
+      addText(report.title, 18, true);
+      yPosition += 5;
+
+      // Metadata
+      addText(`Generated: ${new Date(report.generatedAt).toLocaleDateString()}`, 10);
+      addText(`Reporting Entity: ${report.reportingEntity}`, 10);
+      yPosition += 5;
+
+      // Executive Summary
+      addText('Executive Summary', 14, true);
+      addText(report.executiveSummary, 10);
+      yPosition += 5;
+
+      // Sections
+      report.sections.forEach(section => {
+        addText(section.title, 12, true);
+        addText(section.content, 10);
+        
+        section.subsections.forEach(subsection => {
+          addText(subsection.title, 11, true);
+          addText(subsection.content, 10);
+        });
+        
+        yPosition += 3;
+      });
+
+      // Conclusion
+      addText('Conclusion', 14, true);
+      addText(report.conclusion, 10);
+
+      // Save the PDF
+      const fileName = `EU_Emission_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+      
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      setError('Failed to generate PDF report');
+    } finally {
+      setDownloadingPdf(false);
+    }
   };
 
-  const formatReportForDownload = (report: ComplianceReport): string => {
+  const downloadMarkdown = () => {
+    if (!report) return;
+
     let content = `# ${report.title}\n\n`;
     content += `**Generated:** ${new Date(report.generatedAt).toLocaleDateString()}\n`;
     content += `**Reporting Entity:** ${report.reportingEntity}\n\n`;
@@ -53,7 +119,15 @@ export const ComplianceReportGenerator: React.FC = () => {
     
     content += `## Conclusion\n\n${report.conclusion}\n`;
     
-    return content;
+    const blob = new Blob([content], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `EU_Emission_Report_${new Date().toISOString().split('T')[0]}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -91,13 +165,33 @@ export const ComplianceReportGenerator: React.FC = () => {
           )}
           
           {report && (
-            <button
-              onClick={downloadReport}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              <Download className="w-4 h-4" />
-              <span>Download Report</span>
-            </button>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={downloadPDF}
+                disabled={downloadingPdf}
+                className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {downloadingPdf ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Generating PDF...</span>
+                  </>
+                ) : (
+                  <>
+                    <FileDown className="w-4 h-4" />
+                    <span>Download PDF</span>
+                  </>
+                )}
+              </button>
+              
+              <button
+                onClick={downloadMarkdown}
+                className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                <span>Download MD</span>
+              </button>
+            </div>
           )}
         </div>
       </div>
