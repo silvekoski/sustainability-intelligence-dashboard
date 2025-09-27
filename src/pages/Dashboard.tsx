@@ -15,8 +15,7 @@ import {
   Loader2, 
   AlertCircle,
   TrendingUp,
-  Leaf,
-  Activity
+  Leaf
 } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
@@ -144,35 +143,6 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Simple Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <img 
-              src="/esboost-logo.svg" 
-              alt="ESBoost" 
-              className="h-8 w-auto"
-            />
-            <div className="h-6 w-px bg-gray-300" />
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">
-                Sustainability Intelligence Dashboard
-              </h1>
-              <p className="text-sm text-gray-500">
-                Prototype Demo
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-              <Activity className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-sm font-medium text-gray-700">Live Monitoring</span>
-          </div>
-        </div>
-      </header>
-
       {/* Dashboard Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
       {/* Factory Comparison Bar */}
