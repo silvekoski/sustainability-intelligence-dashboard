@@ -52,5 +52,5 @@ export interface UpdateProfileData {
 
 export interface AuthError {
   message: string;
-  field?: string;
+  code?: string;
 }
