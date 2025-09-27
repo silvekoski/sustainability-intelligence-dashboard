@@ -54,36 +54,40 @@ export const calculatePlantSummaries = (data: PowerPlantData[]): PlantSummary[] 
 };
 
 export const calculateEmissionsTrends = (data: PowerPlantData[]): EmissionsTrend[] => {
-  // Generate 12 months of sample data for demonstration
+  // Generate 12 months of tCO2e data with realistic seasonal variations
   const months = [
     'Jan 2024', 'Feb 2024', 'Mar 2024', 'Apr 2024', 'May 2024', 'Jun 2024',
     'Jul 2024', 'Aug 2024', 'Sep 2024', 'Oct 2024', 'Nov 2024', 'Dec 2024'
   ];
 
-  // Base monthly emissions with seasonal variations
-  const baseMonthlyEmissions = [
-    { CO2: 2850, CH4: 0.185, N2O: 0.095 }, // Jan - higher winter demand
-    { CO2: 2650, CH4: 0.172, N2O: 0.088 }, // Feb
-    { CO2: 2420, CH4: 0.158, N2O: 0.081 }, // Mar - spring reduction
-    { CO2: 2180, CH4: 0.142, N2O: 0.073 }, // Apr
-    { CO2: 1950, CH4: 0.127, N2O: 0.065 }, // May - lowest demand
-    { CO2: 2100, CH4: 0.137, N2O: 0.070 }, // Jun - slight increase
-    { CO2: 2350, CH4: 0.153, N2O: 0.078 }, // Jul - summer peak
-    { CO2: 2280, CH4: 0.149, N2O: 0.076 }, // Aug
-    { CO2: 2150, CH4: 0.140, N2O: 0.072 }, // Sep - autumn reduction
-    { CO2: 2380, CH4: 0.155, N2O: 0.079 }, // Oct - heating season starts
-    { CO2: 2720, CH4: 0.177, N2O: 0.091 }, // Nov - higher demand
-    { CO2: 2950, CH4: 0.192, N2O: 0.098 }  // Dec - peak winter
+  // Monthly tCO2e emissions with seasonal variations
+  // Includes CO2 + CH4 (25x GWP) + N2O (298x GWP) converted to CO2 equivalent
+  const monthlyTCO2e = [
+    2895, // Jan - higher winter demand (2850 + 25*0.185 + 298*0.095)
+    2690, // Feb
+    2458, // Mar - spring reduction
+    2214, // Apr
+    1982, // May - lowest demand
+    2133, // Jun - slight increase
+    2388, // Jul - summer peak
+    2317, // Aug
+    2185, // Sep - autumn reduction
+    2417, // Oct - heating season starts
+    2759, // Nov - higher demand
+    2995  // Dec - peak winter
   ];
 
   return months.map((month, index) => {
-    const monthData = baseMonthlyEmissions[index];
+    const tCO2e = monthlyTCO2e[index];
+    const prevTCO2e = index > 0 ? monthlyTCO2e[index - 1] : tCO2e;
+    const change = tCO2e - prevTCO2e;
+    const changePercent = prevTCO2e > 0 ? (change / prevTCO2e) * 100 : 0;
+    
     return {
       date: month,
-      CO2: monthData.CO2,
-      CH4: monthData.CH4,
-      N2O: monthData.N2O,
-      total: monthData.CO2 + monthData.CH4 + monthData.N2O
+      tCO2e,
+      change: index > 0 ? change : undefined,
+      changePercent: index > 0 ? changePercent : undefined
     };
   });
 };

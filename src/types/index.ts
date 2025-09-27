@@ -24,8 +24,7 @@ export interface PlantSummary {
 
 export interface EmissionsTrend {
   date: string;
-  CO2: number;
-  CH4: number;
-  N2O: number;
-  total: number;
+  tCO2e: number;
+  change?: number;
+  changePercent?: number;
 }
