@@ -34,60 +34,60 @@ export const ComplianceReportGenerator: React.FC = () => {
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       const margin = 20;
-      const lineHeight = 7;
+      const lineHeight = 6;
       let yPosition = margin;
 
       // Helper function to add text with word wrapping
-      const addText = (text: string, fontSize: number = 10, isBold: boolean = false) => {
+      const addText = (text: string, fontSize: number = 10, isBold: boolean = false, spacing: number = 3) => {
         pdf.setFontSize(fontSize);
         pdf.setFont('helvetica', isBold ? 'bold' : 'normal');
         
-        const lines = pdf.splitTextToSize(text, pageWidth - 2 * margin);
+        // Better text wrapping with proper width calculation
+        const maxWidth = pageWidth - 2 * margin;
+        const lines = pdf.splitTextToSize(text, maxWidth);
         
         // Check if we need a new page
-        if (yPosition + (lines.length * lineHeight) > pageHeight - margin) {
+        if (yPosition + (lines.length * lineHeight) + spacing > pageHeight - margin) {
           pdf.addPage();
           yPosition = margin;
         }
         
+        // Add each line with proper spacing
         lines.forEach((line: string) => {
           pdf.text(line, margin, yPosition);
           yPosition += lineHeight;
         });
         
-        yPosition += 3; // Extra spacing after paragraphs
+        yPosition += spacing; // Configurable spacing after sections
       };
 
       // Title
-      addText(report.title, 18, true);
-      yPosition += 5;
+      addText(report.title, 20, true, 8);
 
       // Metadata
-      addText(`Generated: ${new Date(report.generatedAt).toLocaleDateString()}`, 10);
-      addText(`Reporting Entity: ${report.reportingEntity}`, 10);
-      yPosition += 5;
+      addText(`Generated: ${new Date(report.generatedAt).toLocaleDateString()}`, 10, false, 2);
+      addText(`Reporting Entity: ${report.reportingEntity}`, 10, false, 8);
 
       // Executive Summary
-      addText('Executive Summary', 14, true);
-      addText(report.executiveSummary, 10);
-      yPosition += 5;
+      addText('Executive Summary', 16, true, 4);
+      addText(report.executiveSummary, 11, false, 8);
 
       // Sections
       report.sections.forEach(section => {
-        addText(section.title, 12, true);
-        addText(section.content, 10);
+        addText(section.title, 14, true, 4);
+        addText(section.content, 11, false, 6);
         
         section.subsections.forEach(subsection => {
-          addText(subsection.title, 11, true);
-          addText(subsection.content, 10);
+          addText(subsection.title, 12, true, 3);
+          addText(subsection.content, 10, false, 5);
         });
         
-        yPosition += 3;
+        yPosition += 6; // Extra space between major sections
       });
 
       // Conclusion
-      addText('Conclusion', 14, true);
-      addText(report.conclusion, 10);
+      addText('Conclusion', 16, true, 4);
+      addText(report.conclusion, 11, false, 6);
 
       // Save the PDF
       const fileName = `EU_Emission_Report_${new Date().toISOString().split('T')[0]}.pdf`;
