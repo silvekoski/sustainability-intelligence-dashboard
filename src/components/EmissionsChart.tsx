@@ -192,11 +192,20 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
                 </div>
                 
                 {/* Date label */}
-            <div className="flex items-center space-x-2 text-xs text-gray-500">
-              <div className="w-3 h-3 bg-blue-500 rounded-sm"></div>
-              <span>Monthly Emissions</span>
+                <div className="mt-2 text-xs text-gray-600 text-center font-medium">
+                  {item.date}
+                </div>
+              </div>
             );
           })}
+        </div>
+      </div>
+      
+      {/* Legend */}
+      <div className="mt-6 flex justify-center">
+        <div className="flex items-center space-x-2 text-xs text-gray-500">
+          <div className="w-3 h-3 bg-blue-500 rounded-sm"></div>
+          <span>Monthly Emissions</span>
         </div>
       </div>
       
