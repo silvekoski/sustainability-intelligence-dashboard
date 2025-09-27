@@ -57,7 +57,7 @@ export const ForgotPasswordForm: React.FC = () => {
                 Try again
               </button>
               <Link
-                to="/login"
+                to="/auth/login"
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
               >
                 Return to sign in
@@ -134,7 +134,7 @@ export const ForgotPasswordForm: React.FC = () => {
 
           <div className="text-center">
             <Link
-              to="/login"
+              to="/auth/login"
               className="inline-flex items-center text-sm font-medium text-green-600 hover:text-green-500 transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-1" />

@@ -19,7 +19,8 @@ export class AuthService {
         options: {
           data: {
             full_name: credentials.fullName,
-          }
+          },
+          emailRedirectTo: undefined, // Disable email confirmation
         }
       });
 

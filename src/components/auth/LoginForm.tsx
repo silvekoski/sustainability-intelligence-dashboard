@@ -44,7 +44,7 @@ export const LoginForm: React.FC = () => {
           <p className="mt-2 text-sm text-gray-600">
             Or{' '}
             <Link
-              to="/register"
+              to="/auth/register"
               className="font-medium text-green-600 hover:text-green-500 transition-colors"
             >
               create a new account
@@ -122,7 +122,7 @@ export const LoginForm: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="text-sm">
               <Link
-                to="/forgot-password"
+                to="/auth/forgot-password"
                 className="font-medium text-green-600 hover:text-green-500 transition-colors"
               >
                 Forgot your password?

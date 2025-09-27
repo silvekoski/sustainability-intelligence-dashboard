@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Link } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, User, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, Mail, Lock, User, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { registerSchema } from '../../utils/validation';
 import { RegisterCredentials } from '../../types/auth';
@@ -11,8 +11,8 @@ export const RegisterForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const { register: registerUser, loading } = useAuth();
+  const navigate = useNavigate();
 
   const {
     register,
@@ -59,37 +59,10 @@ export const RegisterForm: React.FC = () => {
     if (error) {
       setAuthError(error.message);
     } else {
-      setRegistrationSuccess(true);
+      // Registration successful, user will be automatically logged in
+      navigate('/dashboard');
     }
   };
-
-  if (registrationSuccess) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
-              <CheckCircle className="h-6 w-6 text-green-600" />
-            </div>
-            <h2 className="mt-6 text-3xl font-bold text-gray-900">
-              Check your email
-            </h2>
-            <p className="mt-2 text-sm text-gray-600">
-              We've sent a confirmation link to your email address. Please click the link to verify your account.
-            </p>
-            <div className="mt-6">
-              <Link
-                to="/login"
-                className="font-medium text-green-600 hover:text-green-500 transition-colors"
-              >
-                Return to sign in
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -106,7 +79,7 @@ export const RegisterForm: React.FC = () => {
           <p className="mt-2 text-sm text-gray-600">
             Or{' '}
             <Link
-              to="/login"
+              to="/auth/login"
               className="font-medium text-green-600 hover:text-green-500 transition-colors"
             >
               sign in to your existing account
