@@ -18,9 +18,8 @@ export const ProfileSettings: React.FC = () => {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [csvData, setCsvData] = useState<PowerPlantData[] | null>(null);
 
-  const { user, updatePassword, deleteAccount, logout, loading } = useAuth();
+  const { user, updatePassword, deleteAccount, logout, loading, csvData, setCsvData } = useAuth();
   const navigate = useNavigate();
 
   const profileForm = useForm<UpdateProfileData>({

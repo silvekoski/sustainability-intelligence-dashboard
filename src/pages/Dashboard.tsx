@@ -1,5 +1,4 @@
 import React from 'react';
-import { useState } from 'react';
 import { MetricCard } from '../components/MetricCard';
 import { PlantStatusCard } from '../components/PlantStatusCard';
 import { EmissionsChart } from '../components/EmissionsChart';
@@ -9,7 +8,7 @@ import { ComplianceReportGenerator } from '../components/ComplianceReportGenerat
 import { EUPermitsCard } from '../components/EUPermitsCard';
 import { SECClimateDisclosureSection } from '../components/SECClimateDisclosureSection';
 import { useData } from '../hooks/useData';
-import { PowerPlantData } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   Zap, 
   Factory, 
@@ -22,7 +21,7 @@ import {
 } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
-  const [csvData, setCsvData] = useState<PowerPlantData[] | null>(null);
+  const { csvData } = useAuth();
   const { plantSummaries, emissionsTrends, loading, error, metrics, changes } = useData(csvData);
 
 

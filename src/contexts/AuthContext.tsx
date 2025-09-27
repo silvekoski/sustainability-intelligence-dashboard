@@ -2,8 +2,11 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { AuthState, AuthUser } from '../types/auth';
 import { AuthService } from '../services/authService';
 import { supabase } from '../lib/supabase';
+import { PowerPlantData } from '../types';
 
 interface AuthContextType extends AuthState {
+  csvData: PowerPlantData[] | null;
+  setCsvData: (data: PowerPlantData[] | null) => void;
   login: (email: string, password: string) => Promise<{ error: any }>;
   register: (email: string, password: string, confirmPassword: string, fullName: string) => Promise<{ error: any }>;
   logout: () => Promise<void>;
@@ -33,6 +36,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     loading: true,
     initialized: false,
   });
+  const [csvData, setCsvData] = useState<PowerPlantData[] | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -272,6 +276,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const value: AuthContextType = {
     ...state,
+    csvData,
+    setCsvData,
     login,
     register,
     logout,
