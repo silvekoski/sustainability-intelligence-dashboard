@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
   requireAuth?: boolean;
 }
 
-return <>{children}</>;
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children, 
   requireAuth = true 
 }) => {
@@ -37,6 +37,7 @@ return <>{children}</>;
     return <Navigate to="/dashboard" replace />;
   }
 
-  return <>{children}</>; */
   return <>{children}</>;
 };
+
+export default ProtectedRoute;
