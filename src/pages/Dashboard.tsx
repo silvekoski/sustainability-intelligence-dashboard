@@ -60,82 +60,82 @@ export const Dashboard: React.FC = () => {
   // Sample factory data for comparison - in a real application, this would come from your backend
   const factoryData = [
     {
-      factory_name: "Wärtsilä Vaasa Power Plant",
+      factory_name: "Wärtsilä Vaasa Engine Factory",
       efficiency_pct: 42.0,
       emissions_gCO2_per_kWh: 820,
       output_MWh: 2156, 
       location: "Vaasa, Finland"
     },
     {
-      factory_name: "Wärtsilä Santos Power Plant",
+      factory_name: "Wärtsilä Turku Shipyard",
+      efficiency_pct: 45.0,
+      emissions_gCO2_per_kWh: 380,
+      output_MWh: 1420,
+      location: "Turku, Finland"
+    },
+    {
+      factory_name: "Wärtsilä Trieste Manufacturing",
       efficiency_pct: 48.0,
-      emissions_gCO2_per_kWh: 350,
-      output_MWh: 1618,
-      location: "Santos, Brazil"
+      emissions_gCO2_per_kWh: 320,
+      output_MWh: 1180,
+      location: "Trieste, Italy"
     },
     {
-      factory_name: "Wärtsilä Jordan Power Plant",
-      efficiency_pct: 46.0,
-      emissions_gCO2_per_kWh: 200,
-      output_MWh: 1079,
-      location: "Amman, Jordan"
-    },
-    {
-      factory_name: "Wärtsilä Singapore Power Plant",
-      efficiency_pct: 52.0,
-      emissions_gCO2_per_kWh: 420,
-      output_MWh: 1295,
-      location: "Jurong Island, Singapore"
+      factory_name: "Wärtsilä Zwolle Factory",
+      efficiency_pct: 50.0,
+      emissions_gCO2_per_kWh: 290,
+      output_MWh: 1350,
+      location: "Zwolle, Netherlands"
     }
   ];
 
   // Sample satellite heat data - in a real application, this would come from satellite imagery processing
   const satelliteHeatData = [
     {
-      factory_name: "Wärtsilä Vaasa Power Plant",
+      factory_name: "Wärtsilä Vaasa Engine Factory",
       latitude: 63.0960,
       longitude: 21.6158,
       output_MWh: 2156,
-      thermal_value: 42.8,
-      baseline_temp: 5.2,
-      heat_index: 7.8,
-      efficiency_rank: 4,
-      status: 'red' as const,
+      thermal_value: 15.2,
+      baseline_temp: 2.1,
+      heat_index: 6.8,
+      efficiency_rank: 3,
+      status: 'yellow' as const,
       status_emoji: '🔴'
     },
     {
-      factory_name: "Wärtsilä Santos Power Plant",
-      latitude: -23.9608,
-      longitude: -46.3331,
-      output_MWh: 1618,
-      thermal_value: 35.4,
-      baseline_temp: 24.1,
-      heat_index: 4.2,
+      factory_name: "Wärtsilä Turku Shipyard",
+      latitude: 60.4518,
+      longitude: 22.2666,
+      output_MWh: 1420,
+      thermal_value: 18.7,
+      baseline_temp: 3.5,
+      heat_index: 5.2,
       efficiency_rank: 2,
       status: 'yellow' as const,
       status_emoji: '🟡'
     },
     {
-      factory_name: "Wärtsilä Jordan Power Plant",
-      latitude: 31.9454,
-      longitude: 35.9284,
-      output_MWh: 1079,
-      thermal_value: 38.7,
-      baseline_temp: 22.3,
+      factory_name: "Wärtsilä Trieste Manufacturing",
+      latitude: 45.6495,
+      longitude: 13.7768,
+      output_MWh: 1180,
+      thermal_value: 22.4,
+      baseline_temp: 12.1,
       heat_index: 3.8,
       efficiency_rank: 1,
       status: 'green' as const,
       status_emoji: '🟢'
     },
     {
-      factory_name: "Wärtsilä Singapore Power Plant",
-      latitude: 1.2644,
-      longitude: 103.6999,
-      output_MWh: 1295,
-      thermal_value: 41.2,
-      baseline_temp: 28.5,
-      heat_index: 5.1,
-      efficiency_rank: 3,
+      factory_name: "Wärtsilä Zwolle Factory",
+      latitude: 52.5168,
+      longitude: 6.0830,
+      output_MWh: 1350,
+      thermal_value: 19.8,
+      baseline_temp: 8.2,
+      heat_index: 4.7,
+      efficiency_rank: 4,
       status: 'yellow' as const,
       status_emoji: '🟡'
     }
