@@ -13,6 +13,7 @@ export class AuthService {
   // Register new user
   static async register(credentials: RegisterCredentials) {
     try {
+      console.log('[AuthService] Starting registration for:', credentials.email);
       const { data, error } = await supabase.auth.signUp({
         email: credentials.email,
         password: credentials.password,
@@ -20,15 +21,21 @@ export class AuthService {
           data: {
             full_name: credentials.fullName,
           },
+          emailRedirectTo: undefined, // Disable email confirmation for now
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[AuthService] Registration error:', error);
+        throw error;
+      }
 
+      console.log('[AuthService] Registration successful:', !!data.user);
       // Profile will be created automatically by the handle_new_user trigger
 
       return { data, error: null };
     } catch (error: any) {
+      console.error('[AuthService] Registration exception:', error);
       return { data: null, error: this.formatError(error) };
     }
   }
