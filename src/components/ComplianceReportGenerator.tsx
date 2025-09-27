@@ -42,11 +42,24 @@ export const ComplianceReportGenerator: React.FC = () => {
         pdf.setFontSize(fontSize);
         pdf.setFont('helvetica', isBold ? 'bold' : 'normal');
         
+       // Clean text for PDF compatibility
+       const cleanText = text
+         .replace(/€/g, 'EUR')
+         .replace(/₂/g, '2')
+         .replace(/₄/g, '4')
+         .replace(/₂O/g, '2O')
+         .replace(/–/g, '-')
+         .replace(/'/g, "'")
+         .replace(/"/g, '"')
+         .replace(/"/g, '"')
+         .replace(/…/g, '...')
+         .trim();
+       
         // Manual text wrapping to avoid jsPDF's character spacing issues
         const maxWidth = pageWidth - 2 * margin;
         
         // Split text into paragraphs first
-        const paragraphs = text.split('\n');
+       const paragraphs = cleanText.split('\n');
         const allLines: string[] = [];
         
         paragraphs.forEach(paragraph => {
