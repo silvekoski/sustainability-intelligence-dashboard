@@ -8,7 +8,6 @@ import { FactoryComparisonPanel } from '../components/FactoryComparisonPanel';
 import { ComplianceReportGenerator } from '../components/ComplianceReportGenerator';
 import { EUPermitsCard } from '../components/EUPermitsCard';
 import { SECClimateDisclosureSection } from '../components/SECClimateDisclosureSection';
-import { CSVUploadManager } from '../components/CSVUploadManager';
 import { useData } from '../hooks/useData';
 import { PowerPlantData } from '../types';
 import { 
@@ -23,12 +22,9 @@ import {
 } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
-  const [csvData, setCsvData] = useState<PowerPlantData[] | null>(undefined);
+  const [csvData, setCsvData] = useState<PowerPlantData[] | null>(null);
   const { plantSummaries, emissionsTrends, loading, error, metrics, changes } = useData(csvData);
 
-  const handleDataChange = (newData: PowerPlantData[] | null) => {
-    setCsvData(newData);
-  };
 
   if (loading) {
     return (
@@ -54,15 +50,21 @@ export const Dashboard: React.FC = () => {
   }
 
   // Show message when no data is available
-  if (csvData === null || (Array.isArray(csvData) && csvData.length === 0)) {
+  if (!csvData || csvData.length === 0) {
     return (
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <CSVUploadManager onDataChange={handleDataChange} currentData={csvData} />
-        
-        <div className="text-center py-12">
+      <div className="max-w-7xl mx-auto px-6 py-8">        
+        <div className="text-center py-16">
           <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h2 className="text-2xl font-semibold text-gray-900 mb-2">No Data Available</h2>
-          <p className="text-gray-600 mb-6">Upload a CSV file to view your power plant data and analytics.</p>
+          <p className="text-gray-600 mb-6">
+            Upload a CSV file in Settings → Data Source to view your power plant data and analytics.
+          </p>
+          <button
+            onClick={() => window.location.href = '/settings'}
+            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Go to Settings
+          </button>
         </div>
       </div>
     );
@@ -83,9 +85,6 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
-      {/* CSV Upload Manager */}
-      <CSVUploadManager onDataChange={handleDataChange} currentData={csvData} />
-
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <MetricCard

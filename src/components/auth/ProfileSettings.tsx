@@ -1,21 +1,24 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { User, Mail, Calendar, Loader2, AlertCircle, CheckCircle, Trash2, Lock, X, Shield } from 'lucide-react';
+import { User, Mail, Calendar, Loader2, AlertCircle, CheckCircle, Trash2, Lock, X, Shield, Database } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { updatePasswordSchema } from '../../utils/validation';
 import { UpdateProfileData, UpdatePasswordCredentials } from '../../types/auth';
 import { AuthService } from '../../services/authService';
 import { EUPermitsForm } from '../EUPermitsForm';
+import { CSVUploadManager } from '../CSVUploadManager';
+import { PowerPlantData } from '../../types';
 
 export const ProfileSettings: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'profile' | 'permits' | 'password' | 'danger'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'permits' | 'datasource' | 'password' | 'danger'>('profile');
   const [profileError, setProfileError] = useState<string | null>(null);
   const [profileSuccess, setProfileSuccess] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [csvData, setCsvData] = useState<PowerPlantData[] | null>(null);
 
   const { user, updatePassword, deleteAccount, logout, loading } = useAuth();
   const navigate = useNavigate();
@@ -84,6 +87,7 @@ export const ProfileSettings: React.FC = () => {
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'permits', label: 'EU Permits', icon: Shield },
+    { id: 'datasource', label: 'Data Source', icon: Database },
     { id: 'password', label: 'Password', icon: Lock },
     { id: 'danger', label: 'Danger Zone', icon: Trash2 },
   ];
@@ -245,6 +249,21 @@ export const ProfileSettings: React.FC = () => {
             {activeTab === 'permits' && (
               <div className="space-y-6">
                 <EUPermitsForm />
+              </div>
+            )}
+
+            {activeTab === 'datasource' && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Data Source Management</h2>
+                  <p className="text-sm text-gray-600 mb-6">
+                    Upload and manage your power plant data files. These files will be used across all dashboard analytics and compliance reports.
+                  </p>
+                  <CSVUploadManager 
+                    onDataChange={setCsvData} 
+                    currentData={csvData} 
+                  />
+                </div>
               </div>
             )}
 
