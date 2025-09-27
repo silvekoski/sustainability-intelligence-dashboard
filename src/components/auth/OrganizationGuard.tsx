@@ -1,4 +1,5 @@
 import React from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useOrganization } from '../../contexts/OrganizationContext';
@@ -11,6 +12,7 @@ interface OrganizationGuardProps {
 export const OrganizationGuard: React.FC<OrganizationGuardProps> = ({ children }) => {
   const { user, loading: authLoading, initialized } = useAuth();
   const { currentOrganization, loading: orgLoading } = useOrganization();
+  const location = useLocation();
 
   // Show loading while auth is initializing
   if (!initialized || authLoading) {
@@ -24,9 +26,9 @@ export const OrganizationGuard: React.FC<OrganizationGuardProps> = ({ children }
     );
   }
 
-  // If no user, let the auth system handle it
+  // If no user, redirect to login
   if (!user) {
-    return <>{children}</>;
+    return <Navigate to="/auth/login" state={{ from: location }} replace />;
   }
 
   // Show loading while organization data is loading
