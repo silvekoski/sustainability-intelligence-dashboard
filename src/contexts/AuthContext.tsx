@@ -41,49 +41,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const initializeAuth = async () => {
       try {
-        // Get initial session
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Get initial session with timeout
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Session timeout')), 5000)
+        );
+
+        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]) as any;
         
         if (!mounted) return;
 
-        if (error) {
-          console.error('Session error:', error);
-          setState({
-            user: null,
-            profile: null,
-            loading: false,
-            initialized: true,
-          });
-          return;
-        }
-
         if (session?.user) {
-          // User is authenticated, fetch profile
+          // User is authenticated, try to fetch profile
+          let profile = null;
           try {
-            const { data: profile } = await supabase
+            const { data } = await supabase
               .from('profiles')
               .select('*')
               .eq('id', session.user.id)
               .maybeSingle();
+            profile = data;
+          } catch (error) {
+            console.warn('Profile fetch failed:', error);
+          }
 
-            if (mounted) {
-              setState({
-                user: session.user as AuthUser,
-                profile: profile || null,
-                loading: false,
-                initialized: true,
-              });
-            }
-          } catch (profileError) {
-            console.error('Profile fetch error:', profileError);
-            if (mounted) {
-              setState({
-                user: session.user as AuthUser,
-                profile: null,
-                loading: false,
-                initialized: true,
-              });
-            }
+          if (mounted) {
+            setState({
+              user: session.user as AuthUser,
+              profile,
+              loading: false,
+              initialized: true,
+            });
           }
         } else {
           // No user session
@@ -109,56 +97,54 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     };
 
-    initializeAuth();
+    // Initialize with a small delay to prevent race conditions
+    const timer = setTimeout(initializeAuth, 100);
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
 
-        try {
-          if (event === 'SIGNED_IN' && session?.user) {
-            setState(prev => ({ ...prev, loading: true }));
-            
-            // Fetch user profile
-            const { data: profile } = await supabase
+        console.log('Auth state change:', event, !!session?.user);
+
+        if (event === 'SIGNED_IN' && session?.user) {
+          setState(prev => ({ ...prev, loading: true }));
+          
+          // Fetch user profile
+          let profile = null;
+          try {
+            const { data } = await supabase
               .from('profiles')
               .select('*')
               .eq('id', session.user.id)
               .maybeSingle();
-
-            if (mounted) {
-              setState({
-                user: session.user as AuthUser,
-                profile: profile || null,
-                loading: false,
-                initialized: true,
-              });
-            }
-          } else if (event === 'SIGNED_OUT') {
-            if (mounted) {
-              setState({
-                user: null,
-                profile: null,
-                loading: false,
-                initialized: true,
-              });
-            }
-          } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-            if (mounted) {
-              setState(prev => ({
-                ...prev,
-                user: session.user as AuthUser,
-              }));
-            }
+            profile = data;
+          } catch (error) {
+            console.warn('Profile fetch failed:', error);
           }
-        } catch (error) {
-          console.error('Auth state change error:', error);
+
+          if (mounted) {
+            setState({
+              user: session.user as AuthUser,
+              profile,
+              loading: false,
+              initialized: true,
+            });
+          }
+        } else if (event === 'SIGNED_OUT') {
+          if (mounted) {
+            setState({
+              user: null,
+              profile: null,
+              loading: false,
+              initialized: true,
+            });
+          }
+        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
           if (mounted) {
             setState(prev => ({
               ...prev,
-              loading: false,
-              initialized: true,
+              user: session.user as AuthUser,
             }));
           }
         }
@@ -167,9 +153,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     return () => {
       mounted = false;
+      clearTimeout(timer);
       subscription.unsubscribe();
     };
   }, []);
+
+  // Force initialization after 10 seconds if still loading
+  useEffect(() => {
+    if (state.loading && !state.initialized) {
+      const forceInit = setTimeout(() => {
+        console.warn('Forcing auth initialization due to timeout');
+        setState(prev => ({
+          ...prev,
+          loading: false,
+          initialized: true,
+        }));
+      }, 10000);
+
+      return () => clearTimeout(forceInit);
+    }
+  }, [state.loading, state.initialized]);
 
   const login = async (email: string, password: string) => {
     setState(prev => ({ ...prev, loading: true }));
@@ -180,7 +183,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (result.error) {
         setState(prev => ({ ...prev, loading: false }));
       }
-      // Success case will be handled by onAuthStateChange
       
       return { error: result.error };
     } catch (error) {
@@ -203,7 +205,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (result.error) {
         setState(prev => ({ ...prev, loading: false }));
       }
-      // Success case will be handled by onAuthStateChange
       
       return { error: result.error };
     } catch (error) {
@@ -217,10 +218,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     
     try {
       await AuthService.logout();
-      // State will be updated by onAuthStateChange
     } catch (error) {
       console.error('Logout error:', error);
-      // Force state update even if logout fails
       setState({
         user: null,
         profile: null,
@@ -329,5 +328,4 @@ export function AuthProvider({ children }: AuthProviderProps) {
   );
 }
 
-// Default export for the provider
 export default AuthProvider;

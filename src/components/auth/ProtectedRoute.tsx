@@ -16,12 +16,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const location = useLocation();
 
   // Show loading spinner while auth is initializing
-  if (!initialized || loading) {
+  if (!initialized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex items-center space-x-3">
           <Loader2 className="w-8 h-8 animate-spin text-green-600" />
-          <span className="text-lg font-medium text-gray-700">Loading...</span>
+          <span className="text-lg font-medium text-gray-700">Initializing...</span>
         </div>
       </div>
     );
