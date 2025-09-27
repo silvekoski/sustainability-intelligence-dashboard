@@ -4,6 +4,7 @@ import { PlantStatusCard } from '../components/PlantStatusCard';
 import { EmissionsChart } from '../components/EmissionsChart';
 import { EfficiencyGauge } from '../components/EfficiencyGauge';
 import { PermitsStatusWidget } from '../components/PermitsStatusWidget';
+import { FactoryComparisonBar } from '../components/FactoryComparisonBar';
 import { useData } from '../hooks/useData';
 import { 
   Zap, 
@@ -54,11 +55,49 @@ export const Dashboard: React.FC = () => {
     warning_threshold_pct: 80,
     cumulative_emissions_t: metrics.totalEmissions
   };
+
+  // Sample factory data for comparison - in a real application, this would come from your backend
+  const factoryData = [
+    {
+      factory_name: "Alpha Power Station",
+      efficiency_pct: 38.0,
+      emissions_gCO2_per_kWh: 820,
+      output_MWh: 2156,
+      location: "North Region"
+    },
+    {
+      factory_name: "Beta Energy Facility", 
+      efficiency_pct: 45.0,
+      emissions_gCO2_per_kWh: 350,
+      output_MWh: 1618,
+      location: "Central Region"
+    },
+    {
+      factory_name: "Gamma CHP Plant",
+      efficiency_pct: 80.0,
+      emissions_gCO2_per_kWh: 200,
+      output_MWh: 1079,
+      location: "South Region"
+    },
+    {
+      factory_name: "Delta Dual-Fuel Plant",
+      efficiency_pct: 50.0,
+      emissions_gCO2_per_kWh: 420,
+      output_MWh: 1295,
+      location: "East Region"
+    }
+  ];
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
       {/* Permits Status Widget */}
       <div className="mb-8">
         <PermitsStatusWidget input={permitsData} />
+      </div>
+
+      {/* Factory Comparison Bar */}
+      <div className="mb-8">
+        <FactoryComparisonBar factories={factoryData} />
       </div>
 
       {/* Key Metrics */}
