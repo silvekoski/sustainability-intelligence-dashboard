@@ -233,7 +233,7 @@ export class AuthService {
     if (error.message) {
       // Handle specific Supabase error messages
       if (error.message.includes('Invalid login credentials')) {
-        return { message: 'Invalid email or password' };
+        return { message: 'Invalid email or password. If you just registered, please check your email and click the confirmation link.' };
       }
       if (error.message.includes('Email not confirmed')) {
         return { message: 'Please check your email and click the confirmation link' };
