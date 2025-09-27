@@ -33,13 +33,8 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
   const scaledMax = maxValue + (valueRange * 0.05); // Add 5% padding above
   const effectiveRange = scaledMax - scaledMin;
 
-  // tCO2e color scheme - gradient from green to red based on emissions level
-  const getEmissionColor = (value: number) => {
-    const normalizedValue = (value - minValue) / (maxValue - minValue);
-    if (normalizedValue < 0.33) return '#10b981'; // Green for lower emissions
-    if (normalizedValue < 0.66) return '#f59e0b'; // Orange for medium emissions
-    return '#ef4444'; // Red for higher emissions
-  };
+  // Single color for all bars - professional blue
+  const barColor = '#3b82f6'; // Blue-500
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -151,7 +146,6 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
         <div className="h-80 flex items-end justify-between space-x-3 relative z-20">
           {data.map((item, index) => {
             const barHeight = ((item.tCO2e - scaledMin) / effectiveRange) * 100;
-            const barColor = getEmissionColor(item.tCO2e);
             
             return (
               <div key={index} className="flex-1 flex flex-col items-center group">
@@ -198,19 +192,9 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
                 </div>
                 
                 {/* Date label */}
-                <div className="mt-4 text-center">
-                  <p className="text-xs text-gray-500 font-medium">
-                    {item.date.split(' ')[0]}
-                  </p>
-                  {item.changePercent !== undefined && (
-                    <p className={`text-xs font-bold mt-1 ${
-                      item.changePercent >= 0 ? 'text-red-600' : 'text-green-600'
-                    }`}>
-                      {item.changePercent >= 0 ? '+' : ''}{item.changePercent.toFixed(1)}%
-                    </p>
-                  )}
-                </div>
-              </div>
+            <div className="flex items-center space-x-2 text-xs text-gray-500">
+              <div className="w-3 h-3 bg-blue-500 rounded-sm"></div>
+              <span>Monthly Emissions</span>
             );
           })}
         </div>
