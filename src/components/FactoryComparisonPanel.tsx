@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Factory, CheckCircle, AlertTriangle, XCircle, TrendingUp, Leaf, Shield, FileText } from 'lucide-react';
 import { FactoryComparisonData, FactoryAnalysis, ComplianceStatus } from '../types/factory';
 import { FactoryService } from '../services/factoryService';
+import { PowerPlantData } from '../types';
 
 const StatusIcon = ({ status }: { status: ComplianceStatus }) => {
   switch (status) {
@@ -156,7 +157,11 @@ const FactoryRow = ({ analysis }: { analysis: FactoryAnalysis }) => {
   );
 };
 
-export const FactoryComparisonPanel: React.FC = () => {
+interface FactoryComparisonPanelProps {
+  currentData?: PowerPlantData[] | null;
+}
+
+export const FactoryComparisonPanel: React.FC<FactoryComparisonPanelProps> = ({ currentData }) => {
   const [data, setData] = useState<FactoryComparisonData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -166,7 +171,7 @@ export const FactoryComparisonPanel: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        const comparisonData = await FactoryService.getFactoryComparisonData();
+        const comparisonData = await FactoryService.getFactoryComparisonData(currentData || undefined);
         console.log('Factory comparison data loaded:', comparisonData);
         setData(comparisonData);
       } catch (err) {
@@ -178,7 +183,7 @@ export const FactoryComparisonPanel: React.FC = () => {
     };
 
     loadData();
-  }, []);
+  }, [currentData]);
 
   if (loading) {
     return (

@@ -185,7 +185,7 @@ export const Dashboard: React.FC = () => {
 
       {/* Factory Comparison & Compliance Panel */}
       <div className="mb-8">
-        <FactoryComparisonPanel />
+        <FactoryComparisonPanel currentData={csvData} />
       </div>
 
       {/* EU Compliance Report Generator */}

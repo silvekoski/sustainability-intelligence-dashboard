@@ -3,20 +3,23 @@ import { FactoryData, FactoryBenchmarks, FactoryAnalysis, ComplianceStatus, Comp
 import { parseCSVData, calculateAggregatedMetrics } from '../utils/dataParser';
 
 export class FactoryService {
-  // Fetch factory data from Supabase
-  static async getFactoryData(): Promise<FactoryData[]> {
+  // Process factory data from provided CSV data or fallback to sample data
+  static async getFactoryData(customData?: any[]): Promise<FactoryData[]> {
     try {
-      // Load data from CSV file - try sample_data-2.csv first, then fallback
-      let response = await fetch('/sample_data-2.csv');
-      if (!response.ok) {
-        response = await fetch('/sample_data.csv');
-      }
-      if (!response.ok) {
-        throw new Error('Failed to load CSV data');
-      }
+      let parsedData: any[];
       
-      const csvText = await response.text();
-      const parsedData = this.parseCSVData(csvText);
+      if (customData && customData.length > 0) {
+        // Use provided custom data
+        parsedData = customData;
+      } else {
+        // Fallback to sample data
+        let response = await fetch('/sample_data.csv');
+        if (!response.ok) {
+          throw new Error('Failed to load CSV data');
+        }
+        const csvText = await response.text();
+        parsedData = this.parseCSVData(csvText);
+      }
       
       // Group data by plant and calculate aggregated metrics
       const plantGroups = parsedData.reduce((acc, record) => {
@@ -184,9 +187,9 @@ export class FactoryService {
   }
 
   // Main method to get complete factory comparison data
-  static async getFactoryComparisonData(): Promise<FactoryComparisonData> {
+  static async getFactoryComparisonData(customData?: any[]): Promise<FactoryComparisonData> {
     try {
-      const factories = await this.getFactoryData();
+      const factories = await this.getFactoryData(customData);
       const benchmarks = this.calculateBenchmarks(factories);
 
       const factoryAnalyses: FactoryAnalysis[] = factories.map(factory => {
