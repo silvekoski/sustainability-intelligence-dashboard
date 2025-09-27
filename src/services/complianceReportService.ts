@@ -113,7 +113,6 @@ export class ComplianceReportService {
       us: ['SEC Climate Rule', 'SEC 10-K', 'SEC 8-K'],
       dataAct: ['Data Interoperability', 'Data Portability', 'Access Controls', 'Audit Logging']
     };
-  }
 
     return {
       ...baseData,
@@ -121,6 +120,7 @@ export class ComplianceReportService {
       dataActCompliance,
       complianceMapping
     };
+  }
   }
 
   private static generateSECDisclosure(
