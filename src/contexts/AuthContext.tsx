@@ -77,8 +77,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const handleUserSession = async (user: AuthUser) => {
     setState(prev => ({ ...prev, user, loading: true }));
     
-    // Fetch user profile
-    const { data: profile } = await AuthService.getUserProfile(user.id);
+    // Fetch user profile - handle case where profile doesn't exist yet
+    const { data: profile, error } = await AuthService.getUserProfile(user.id);
+    
+    // If no profile exists, create one
+    if (!profile && !error) {
+      const { data: newProfile } = await AuthService.createUserProfile(user.id, {
+        email: user.email || '',
+        full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || '',
+      });
+      
+      setState({
+        user,
+        profile: newProfile,
+        loading: false,
+        initialized: true,
+      });
+      return;
+    }
     
     setState({
       user,
