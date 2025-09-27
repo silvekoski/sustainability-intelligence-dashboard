@@ -2,105 +2,53 @@ import { supabase } from '../lib/supabase';
 import { FactoryData, FactoryBenchmarks, FactoryAnalysis, ComplianceStatus, ComplianceCheck, FactoryComparisonData } from '../types/factory';
 
 export class FactoryService {
-  // Fetch factory data from Supabase power plants
+  // Fetch factory data from Supabase
   static async getFactoryData(): Promise<FactoryData[]> {
     try {
-      // Fetch aggregated data from the last 24 hours
-      const { data: plantsData, error } = await supabase
-        .from('power_plants')
-        .select(`
-          id,
-          plant_name,
-          fuel_type,
-          location,
-          plant_readings!inner (
-            electricity_output_mwh,
-            co2_emissions_tonnes,
-            efficiency_percent
-          )
-        `)
-        .gte('plant_readings.reading_time', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+      // Mock data for now - replace with actual Supabase queries
+      const mockData: FactoryData[] = [
+        {
+          id: '1',
+          factory_name: 'Alpha Power Station',
+          efficiency_pct: 38,
+          emissions_gCO2_per_kWh: 820,
+          output_MWh: 2156,
+          location: 'Germany',
+          total_co2_tonnes: 1768
+        },
+        {
+          id: '2',
+          factory_name: 'Beta Energy Facility',
+          efficiency_pct: 45,
+          emissions_gCO2_per_kWh: 350,
+          output_MWh: 1618,
+          location: 'Netherlands',
+          total_co2_tonnes: 566
+        },
+        {
+          id: '3',
+          factory_name: 'Gamma CHP Plant',
+          efficiency_pct: 80,
+          emissions_gCO2_per_kWh: 200,
+          output_MWh: 1083,
+          location: 'Denmark',
+          total_co2_tonnes: 217
+        },
+        {
+          id: '4',
+          factory_name: 'Delta Dual-Fuel Plant',
+          efficiency_pct: 50,
+          emissions_gCO2_per_kWh: 450,
+          output_MWh: 1298,
+          location: 'France',
+          total_co2_tonnes: 584
+        }
+      ];
 
-      if (error) {
-        console.error('Supabase error:', error);
-        throw new Error(`Database error: ${error.message}`);
-      }
-
-      if (!plantsData || plantsData.length === 0) {
-        console.warn('No plant data found, using fallback data');
-        // Fallback to mock data if no real data available
-        return [
-          {
-            id: '1',
-            factory_name: 'Alpha Power Station',
-            efficiency_pct: 38,
-            emissions_gCO2_per_kWh: 820,
-            output_MWh: 2156,
-            location: 'Germany',
-            total_co2_tonnes: 1768
-          },
-          {
-            id: '2',
-            factory_name: 'Beta Energy Facility',
-            efficiency_pct: 45,
-            emissions_gCO2_per_kWh: 350,
-            output_MWh: 1618,
-            location: 'Netherlands',
-            total_co2_tonnes: 566
-          },
-          {
-            id: '3',
-            factory_name: 'Gamma CHP Plant',
-            efficiency_pct: 80,
-            emissions_gCO2_per_kWh: 200,
-            output_MWh: 1083,
-            location: 'Denmark',
-            total_co2_tonnes: 217
-          },
-          {
-            id: '4',
-            factory_name: 'Delta Dual-Fuel Plant',
-            efficiency_pct: 50,
-            emissions_gCO2_per_kWh: 450,
-            output_MWh: 1298,
-            location: 'France',
-            total_co2_tonnes: 584
-          }
-        ];
-      }
-
-      // Transform and aggregate the data
-      const factoryData: FactoryData[] = plantsData.map(plant => {
-        const readings = plant.plant_readings;
-        
-        // Calculate aggregated values
-        const totalOutput = readings.reduce((sum: number, r: any) => sum + r.electricity_output_mwh, 0);
-        const totalEmissions = readings.reduce((sum: number, r: any) => sum + r.co2_emissions_tonnes, 0);
-        const avgEfficiency = readings.length > 0 
-          ? readings.reduce((sum: number, r: any) => sum + r.efficiency_percent, 0) / readings.length 
-          : 0;
-        
-        // Calculate emissions intensity (gCO2/kWh)
-        const emissionsIntensity = totalOutput > 0 
-          ? (totalEmissions * 1000 * 1000) / (totalOutput * 1000) // Convert tonnes to grams, MWh to kWh
-          : 0;
-
-        return {
-          id: plant.id,
-          factory_name: plant.plant_name,
-          efficiency_pct: avgEfficiency,
-          emissions_gCO2_per_kWh: emissionsIntensity,
-          output_MWh: totalOutput,
-          location: plant.location || undefined,
-          total_co2_tonnes: totalEmissions
-        };
-      });
-
-      return factoryData;
+      return mockData;
     } catch (error) {
       console.error('Error fetching factory data:', error);
-      // Return empty array on error - will trigger fallback in UI
-      throw error;
+      return [];
     }
   }
 
