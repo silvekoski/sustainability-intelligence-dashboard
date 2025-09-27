@@ -1,15 +1,21 @@
 import React, { useState } from 'react';
 import { ComplianceReportService } from '../services/complianceReportService';
 import { Download, FileText, Loader2, Globe, Flag, Database } from 'lucide-react';
+import { PowerPlantData } from '../types';
 
-export const ComplianceReportGenerator: React.FC = () => {
+interface ComplianceReportGeneratorProps {
+  currentData?: PowerPlantData[] | null;
+}
+
+export const ComplianceReportGenerator: React.FC<ComplianceReportGeneratorProps> = ({ currentData }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [jurisdiction, setJurisdiction] = useState<'EU' | 'US' | 'COMBINED'>('COMBINED');
 
   const handleGenerateReport = async () => {
     setIsGenerating(true);
     try {
-      const report = await ComplianceReportService.generateComplianceReport(jurisdiction);
+      // Pass the current CSV data to the report service
+      const report = await ComplianceReportService.generateComplianceReport(jurisdiction, currentData || undefined);
 
       // Generate PDF
       const { jsPDF } = await import('jspdf');

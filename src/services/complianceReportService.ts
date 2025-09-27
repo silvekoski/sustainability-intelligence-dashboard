@@ -9,19 +9,28 @@ import {
   NetZeroPathway
 } from '../types/compliance';
 import { PowerPlantData } from '../types';
-import { parseCSVData, calculateAggregatedMetrics } from '../utils/dataParser';
+import { calculateAggregatedMetrics } from '../utils/dataParser';
+import { CSVService } from './csvService';
+import { useAuth } from '../contexts/AuthContext';
 
 export class ComplianceReportService {
-  static async generateComplianceReport(jurisdiction: 'EU' | 'US' | 'COMBINED' = 'COMBINED'): Promise<ComplianceReport> {
+  static async generateComplianceReport(jurisdiction: 'EU' | 'US' | 'COMBINED' = 'COMBINED', customData?: PowerPlantData[]): Promise<ComplianceReport> {
     try {
-      // Load and process data
-      const response = await fetch('/sample_data.csv');
-      if (!response.ok) {
-        throw new Error('Failed to load CSV data');
+      let parsedData: PowerPlantData[];
+      
+      if (customData && customData.length > 0) {
+        // Use provided custom data (from uploaded CSV)
+        parsedData = customData;
+      } else {
+        // Fallback to sample data only if no custom data provided
+        const response = await fetch('/sample_data.csv');
+        if (!response.ok) {
+          throw new Error('Failed to load CSV data');
+        }
+        const csvText = await response.text();
+        parsedData = CSVService.parseCSVData(csvText);
       }
       
-      const csvText = await response.text();
-      const parsedData = parseCSVData(csvText);
       const reportData = this.processDataForCompliance(parsedData, jurisdiction);
       
       return this.generateReport(reportData);

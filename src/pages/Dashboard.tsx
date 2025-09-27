@@ -190,7 +190,7 @@ export const Dashboard: React.FC = () => {
 
       {/* EU Compliance Report Generator */}
       <div className="mb-8">
-        <ComplianceReportGenerator />
+        <ComplianceReportGenerator currentData={csvData} />
       </div>
 
       {/* Sustainability Insights */}
