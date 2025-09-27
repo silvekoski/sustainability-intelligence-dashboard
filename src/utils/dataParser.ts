@@ -87,3 +87,45 @@ export const calculateAggregatedMetrics = (data: PowerPlantData[]) => {
     avgEfficiency: Math.round(avgEfficiency * 10) / 10 // Round to 1 decimal
   };
 };
+
+// Calculate period-over-period changes
+export const calculatePeriodChanges = (data: PowerPlantData[]) => {
+  // Split data into two periods (first day vs second day)
+  const day1Data = data.filter(d => d.date.startsWith('2025-01-01'));
+  const day2Data = data.filter(d => d.date.startsWith('2025-01-02'));
+  
+  if (day1Data.length === 0 || day2Data.length === 0) {
+    return {
+      electricityChange: 0,
+      emissionsChange: 0,
+      efficiencyChange: 0,
+      fuelChange: 0
+    };
+  }
+
+  const day1Metrics = calculateAggregatedMetrics(day1Data);
+  const day2Metrics = calculateAggregatedMetrics(day2Data);
+
+  const electricityChange = day1Metrics.totalElectricity > 0 
+    ? ((day2Metrics.totalElectricity - day1Metrics.totalElectricity) / day1Metrics.totalElectricity) * 100 
+    : 0;
+  
+  const emissionsChange = day1Metrics.totalEmissions > 0 
+    ? ((day2Metrics.totalEmissions - day1Metrics.totalEmissions) / day1Metrics.totalEmissions) * 100 
+    : 0;
+  
+  const efficiencyChange = day1Metrics.avgEfficiency > 0 
+    ? ((day2Metrics.avgEfficiency - day1Metrics.avgEfficiency) / day1Metrics.avgEfficiency) * 100 
+    : 0;
+  
+  const fuelChange = day1Metrics.totalFuelConsumption > 0 
+    ? ((day2Metrics.totalFuelConsumption - day1Metrics.totalFuelConsumption) / day1Metrics.totalFuelConsumption) * 100 
+    : 0;
+
+  return {
+    electricityChange: Math.round(electricityChange * 10) / 10,
+    emissionsChange: Math.round(emissionsChange * 10) / 10,
+    efficiencyChange: Math.round(efficiencyChange * 10) / 10,
+    fuelChange: Math.round(fuelChange * 10) / 10
+  };
+};

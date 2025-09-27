@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { PowerPlantData, PlantSummary, EmissionsTrend } from '../types';
-import { parseCSVData, calculatePlantSummaries, calculateEmissionsTrends, calculateAggregatedMetrics } from '../utils/dataParser';
+import { parseCSVData, calculatePlantSummaries, calculateEmissionsTrends, calculateAggregatedMetrics, calculatePeriodChanges } from '../utils/dataParser';
 
 export const useData = () => {
   const [data, setData] = useState<PowerPlantData[]>([]);
@@ -34,6 +34,7 @@ export const useData = () => {
   }, []);
 
   const metrics = calculateAggregatedMetrics(data);
+  const changes = calculatePeriodChanges(data);
 
   return {
     data,
@@ -41,6 +42,7 @@ export const useData = () => {
     emissionsTrends,
     loading,
     error,
-    metrics
+    metrics,
+    changes
   };
 };

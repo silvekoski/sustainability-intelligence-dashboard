@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
-  const { plantSummaries, emissionsTrends, loading, error, metrics } = useData();
+  const { plantSummaries, emissionsTrends, loading, error, metrics, changes } = useData();
 
   if (loading) {
     return (
@@ -65,7 +65,7 @@ export const Dashboard: React.FC = () => {
           title="Total Electricity Output"
           value={metrics.totalElectricity.toFixed(0)}
           unit="MWh"
-          change={2.4}
+          change={changes.electricityChange}
           changeLabel="vs last period"
           icon={<Zap className="w-6 h-6" />}
           color="blue"
@@ -74,7 +74,7 @@ export const Dashboard: React.FC = () => {
           title="Total CO₂ Emissions"
           value={metrics.totalEmissions.toFixed(0)}
           unit="tonnes"
-          change={-1.2}
+          change={changes.emissionsChange}
           changeLabel="vs last period"
           icon={<Factory className="w-6 h-6" />}
           color="red"
@@ -83,7 +83,7 @@ export const Dashboard: React.FC = () => {
           title="Average Efficiency"
           value={metrics.avgEfficiency.toFixed(1)}
           unit="%"
-          change={0.8}
+          change={changes.efficiencyChange}
           changeLabel="vs last period"
           icon={<Gauge className="w-6 h-6" />}
           color="green"
@@ -92,7 +92,7 @@ export const Dashboard: React.FC = () => {
           title="Fuel Consumption"
           value={metrics.totalFuelConsumption.toFixed(0)}
           unit="MWh"
-          change={-0.5}
+          change={changes.fuelChange}
           changeLabel="vs last period"
           icon={<Flame className="w-6 h-6" />}
           color="orange"
