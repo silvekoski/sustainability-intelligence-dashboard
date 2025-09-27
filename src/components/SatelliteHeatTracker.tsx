@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Thermometer, Satellite, Info, Eye, EyeOff } from 'lucide-react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 interface FactoryHeatData {
   factory_name: string;
@@ -21,6 +23,9 @@ interface SatelliteHeatTrackerProps {
 export const SatelliteHeatTracker: React.FC<SatelliteHeatTrackerProps> = ({ factories }) => {
   const [showMap, setShowMap] = useState(true);
   const [selectedFactory, setSelectedFactory] = useState<FactoryHeatData | null>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const markersRef = useRef<L.Marker[]>([]);
 
   // Process and sort factories by efficiency rank
   const processedFactories = factories
@@ -29,6 +34,185 @@ export const SatelliteHeatTracker: React.FC<SatelliteHeatTrackerProps> = ({ fact
       efficiency_rank: index + 1 // This would be calculated based on output/heat_index in real implementation
     }))
     .sort((a, b) => a.efficiency_rank - b.efficiency_rank);
+
+  // Initialize Leaflet map
+  useEffect(() => {
+    if (!showMap || !mapRef.current || mapInstanceRef.current) return;
+
+    // Create map centered on Europe (good view for global factories)
+    const map = L.map(mapRef.current).setView([50.0, 10.0], 3);
+
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 18,
+    }).addTo(map);
+
+    mapInstanceRef.current = map;
+
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, [showMap]);
+
+  // Add factory markers to map
+  useEffect(() => {
+    if (!mapInstanceRef.current || !showMap) return;
+
+    // Clear existing markers
+    markersRef.current.forEach(marker => {
+      mapInstanceRef.current?.removeLayer(marker);
+    });
+    markersRef.current = [];
+
+    // Add new markers
+    factories.forEach((factory) => {
+      if (!mapInstanceRef.current) return;
+
+      // Create custom icon based on status
+      const getMarkerColor = (status: string) => {
+        switch (status) {
+          case 'green': return '#10b981';
+          case 'yellow': return '#f59e0b';
+          case 'red': return '#ef4444';
+          default: return '#6b7280';
+        }
+      };
+
+      // Create custom HTML marker
+      const customIcon = L.divIcon({
+        html: `
+          <div style="position: relative;">
+            <!-- Heat plume effect -->
+            <div style="
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              width: ${factory.heat_index * 4 + 20}px;
+              height: ${factory.heat_index * 4 + 20}px;
+              background: ${getMarkerColor(factory.status)};
+              border-radius: 50%;
+              opacity: 0.3;
+              filter: blur(8px);
+              animation: pulse 2s infinite;
+            "></div>
+            
+            <!-- Factory marker -->
+            <div style="
+              position: relative;
+              width: 24px;
+              height: 24px;
+              background: ${getMarkerColor(factory.status)};
+              border: 3px solid white;
+              border-radius: 4px;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              z-index: 10;
+            ">
+              <div style="
+                width: 8px;
+                height: 8px;
+                background: white;
+                border-radius: 50%;
+                opacity: 0.9;
+              "></div>
+            </div>
+            
+            <!-- Smoke stack -->
+            <div style="
+              position: absolute;
+              top: -8px;
+              left: 50%;
+              transform: translateX(-50%);
+              width: 4px;
+              height: 12px;
+              background: #4b5563;
+              border-radius: 2px 2px 0 0;
+            "></div>
+            
+            <!-- Heat index label -->
+            <div style="
+              position: absolute;
+              top: 32px;
+              left: 50%;
+              transform: translateX(-50%);
+              background: rgba(0,0,0,0.8);
+              color: white;
+              font-size: 10px;
+              padding: 2px 4px;
+              border-radius: 3px;
+              white-space: nowrap;
+              font-family: monospace;
+            ">
+              HI: ${factory.heat_index.toFixed(1)}
+            </div>
+          </div>
+          
+          <style>
+            @keyframes pulse {
+              0% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+              50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.2; }
+              100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+            }
+          </style>
+        `,
+        className: 'custom-factory-marker',
+        iconSize: [40, 60],
+        iconAnchor: [20, 30],
+      });
+
+      const marker = L.marker([factory.latitude, factory.longitude], {
+        icon: customIcon
+      }).addTo(mapInstanceRef.current);
+
+      // Add popup
+      const popupContent = `
+        <div style="font-family: system-ui, -apple-system, sans-serif; min-width: 200px;">
+          <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px; color: #1f2937;">
+            ${factory.factory_name}
+          </div>
+          <div style="font-size: 12px; color: #6b7280; line-height: 1.4;">
+            <div><strong>Heat Index:</strong> ${factory.heat_index.toFixed(1)}/10</div>
+            <div><strong>Efficiency Rank:</strong> #${factory.efficiency_rank}/${factories.length}</div>
+            <div><strong>Coordinates:</strong> ${factory.latitude.toFixed(3)}, ${factory.longitude.toFixed(3)}</div>
+            <div><strong>Thermal Value:</strong> ${factory.thermal_value.toFixed(1)}°C</div>
+            <div><strong>Baseline Temp:</strong> ${factory.baseline_temp.toFixed(1)}°C</div>
+            ${factory.output_MWh ? `<div><strong>Output:</strong> ${factory.output_MWh.toFixed(0)} MWh</div>` : ''}
+          </div>
+          <div style="margin-top: 8px; padding: 4px 8px; background: ${
+            factory.status === 'green' ? '#dcfce7' : 
+            factory.status === 'yellow' ? '#fef3c7' : '#fee2e2'
+          }; border-radius: 4px; font-size: 11px; text-align: center;">
+            ${factory.status_emoji} ${
+              factory.status === 'green' ? 'Efficient' :
+              factory.status === 'yellow' ? 'Average' : 'Needs Attention'
+            }
+          </div>
+        </div>
+      `;
+
+      marker.bindPopup(popupContent);
+
+      // Handle marker click
+      marker.on('click', () => {
+        setSelectedFactory(factory);
+      });
+
+      markersRef.current.push(marker);
+    });
+
+    // Fit map to show all factories
+    if (factories.length > 0) {
+      const group = new L.FeatureGroup(markersRef.current);
+      mapInstanceRef.current.fitBounds(group.getBounds().pad(0.1));
+    }
+  }, [factories, showMap]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -46,247 +230,6 @@ export const SatelliteHeatTracker: React.FC<SatelliteHeatTrackerProps> = ({ fact
       case 'red': return 'border-red-200 bg-red-50';
       default: return 'border-gray-200 bg-gray-50';
     }
-  };
-
-  // Simple map visualization (in production, you'd use Leaflet/Mapbox)
-  const MapVisualization = () => {
-    if (!factories.length) return null;
-
-    // World map bounds (Web Mercator projection approximation)
-    const worldBounds = {
-      minLat: -85,
-      maxLat: 85,
-      minLng: -180,
-      maxLng: 180
-    };
-    
-    // Convert lat/lng to pixel coordinates
-    const latToY = (lat: number) => {
-      const latRad = (lat * Math.PI) / 180;
-      const mercN = Math.log(Math.tan((Math.PI / 4) + (latRad / 2)));
-      return (1 - (mercN / Math.PI)) * 50; // Scale to 0-100%
-    };
-    
-    const lngToX = (lng: number) => {
-      return ((lng + 180) / 360) * 100; // Scale to 0-100%
-    };
-
-    return (
-      <div className="relative rounded-lg h-96 overflow-hidden border border-gray-300 shadow-inner bg-blue-100">
-        {/* World map base layer */}
-        <div className="absolute inset-0">
-          {/* Ocean base */}
-          <div className="w-full h-full bg-gradient-to-br from-blue-200 via-blue-300 to-blue-400"></div>
-          
-          {/* Continental landmasses (simplified) */}
-          <div className="absolute inset-0">
-            {/* North America */}
-            <div className="absolute bg-gradient-to-br from-green-200 to-green-400 rounded-lg opacity-80"
-                 style={{ 
-                   left: '10%', top: '15%', 
-                   width: '25%', height: '35%',
-                   clipPath: 'polygon(20% 0%, 100% 0%, 95% 70%, 80% 100%, 0% 90%, 5% 40%)'
-                 }}>
-            </div>
-            
-            {/* South America */}
-            <div className="absolute bg-gradient-to-br from-green-300 to-yellow-400 rounded-lg opacity-80"
-                 style={{ 
-                   left: '20%', top: '50%', 
-                   width: '15%', height: '40%',
-                   clipPath: 'polygon(30% 0%, 100% 10%, 80% 100%, 0% 90%, 10% 30%)'
-                 }}>
-            </div>
-            
-            {/* Europe */}
-            <div className="absolute bg-gradient-to-br from-green-200 to-yellow-300 rounded-lg opacity-80"
-                 style={{ 
-                   left: '48%', top: '20%', 
-                   width: '12%', height: '20%',
-                   clipPath: 'polygon(0% 40%, 80% 0%, 100% 60%, 60% 100%, 20% 80%)'
-                 }}>
-            </div>
-            
-            {/* Africa */}
-            <div className="absolute bg-gradient-to-br from-yellow-300 to-orange-400 rounded-lg opacity-80"
-                 style={{ 
-                   left: '45%', top: '35%', 
-                   width: '15%', height: '35%',
-                   clipPath: 'polygon(40% 0%, 100% 20%, 90% 100%, 10% 95%, 0% 60%, 20% 10%)'
-                 }}>
-            </div>
-            
-            {/* Asia */}
-            <div className="absolute bg-gradient-to-br from-green-300 to-yellow-400 rounded-lg opacity-80"
-                 style={{ 
-                   left: '60%', top: '10%', 
-                   width: '35%', height: '45%',
-                   clipPath: 'polygon(0% 30%, 70% 0%, 100% 40%, 90% 80%, 60% 100%, 20% 90%, 10% 60%)'
-                 }}>
-            </div>
-            
-            {/* Australia */}
-            <div className="absolute bg-gradient-to-br from-orange-300 to-red-400 rounded-lg opacity-80"
-                 style={{ 
-                   left: '75%', top: '65%', 
-                   width: '12%', height: '15%',
-                   clipPath: 'polygon(20% 30%, 100% 0%, 90% 100%, 0% 80%)'
-                 }}>
-            </div>
-          </div>
-          
-          {/* Geographic features overlay */}
-          <div className="absolute inset-0 opacity-40">
-            {/* Mountain ranges - Himalayas */}
-            <div className="absolute bg-gradient-to-b from-gray-400 to-gray-600 rounded-full transform rotate-12"
-                 style={{ left: '70%', top: '25%', width: '15%', height: '8%' }}>
-            </div>
-            
-            {/* Rocky Mountains */}
-            <div className="absolute bg-gradient-to-b from-gray-300 to-gray-500 rounded-full transform rotate-45"
-                 style={{ left: '15%', top: '20%', width: '3%', height: '25%' }}>
-            </div>
-            
-            {/* Andes */}
-            <div className="absolute bg-gradient-to-b from-gray-400 to-gray-600 rounded-full transform rotate-12"
-                 style={{ left: '22%', top: '50%', width: '2%', height: '35%' }}>
-            </div>
-            
-            {/* Major rivers - Amazon */}
-            <div className="absolute h-1 bg-blue-400 transform rotate-6 opacity-60"
-                 style={{ left: '20%', top: '60%', width: '12%' }}>
-            </div>
-            
-            {/* Nile */}
-            <div className="absolute h-1 bg-blue-400 transform -rotate-12 opacity-60"
-                 style={{ left: '52%', top: '40%', width: '8%' }}>
-            </div>
-            
-            {/* Sahara Desert */}
-            <div className="absolute bg-gradient-radial from-yellow-400 to-orange-500 rounded-full opacity-30"
-                 style={{ left: '45%', top: '35%', width: '12%', height: '10%' }}>
-            </div>
-            
-            {/* Amazon Rainforest */}
-            <div className="absolute bg-gradient-radial from-green-400 to-green-600 rounded-full opacity-40"
-                 style={{ left: '18%', top: '55%', width: '15%', height: '12%' }}>
-            </div>
-          </div>
-          
-          {/* Latitude/Longitude grid */}
-          <div className="absolute inset-0 opacity-10">
-            {/* Latitude lines (horizontal) */}
-            {[-60, -30, 0, 30, 60].map((lat, i) => (
-              <div key={`lat-${lat}`} className="absolute w-full h-px bg-gray-600" 
-                   style={{ top: `${latToY(lat)}%` }}>
-                <span className="absolute left-2 -top-2 text-xs text-gray-600 font-mono">
-                  {lat}°
-                </span>
-              </div>
-            ))}
-            {/* Longitude lines (vertical) */}
-            {[-120, -60, 0, 60, 120].map((lng, i) => (
-              <div key={`lng-${lng}`} className="absolute h-full w-px bg-gray-600" 
-                   style={{ left: `${lngToX(lng)}%` }}>
-                <span className="absolute -bottom-4 -left-3 text-xs text-gray-600 font-mono">
-                  {lng}°
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Factory markers */}
-        {factories.map((factory, index) => {
-          const x = lngToX(factory.longitude);
-          const y = latToY(factory.latitude);
-
-          return (
-            <div key={index} className="absolute transform -translate-x-1/2 -translate-y-1/2" 
-                 style={{ left: `${Math.max(2, Math.min(98, x))}%`, top: `${Math.max(2, Math.min(98, y))}%` }}>
-              {/* Heat plume effect */}
-              <div className={`absolute inset-0 rounded-full blur-md opacity-40 animate-pulse ${
-                factory.status === 'red' ? 'bg-red-400 w-16 h-16' :
-                factory.status === 'yellow' ? 'bg-yellow-400 w-12 h-12' :
-                'bg-green-400 w-8 h-8'
-              } transform -translate-x-1/2 -translate-y-1/2`}></div>
-              
-              {/* Factory marker */}
-              <div
-                className={`relative cursor-pointer transition-all hover:scale-125 z-10 ${
-                  selectedFactory?.factory_name === factory.factory_name ? 'scale-125' : ''
-                }`}
-                onClick={() => setSelectedFactory(selectedFactory?.factory_name === factory.factory_name ? null : factory)}
-              >
-                {/* Factory building icon */}
-                <div className="relative">
-                  <div className={`w-6 h-6 ${getStatusColor(factory.status)} rounded-sm border-2 border-white shadow-lg flex items-center justify-center`}>
-                    <div className="w-2 h-2 bg-white rounded-full opacity-80"></div>
-                  </div>
-                  {/* Smoke stack */}
-                  <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-1 h-3 bg-gray-600 rounded-t"></div>
-                  {/* Heat index label */}
-                  <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 text-white text-xs px-1 py-0.5 rounded whitespace-nowrap">
-                    HI: {factory.heat_index.toFixed(1)}
-                  </div>
-                </div>
-              </div>
-
-              {/* Tooltip */}
-              {selectedFactory?.factory_name === factory.factory_name && (
-                <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-xl border border-gray-300 p-4 min-w-56 z-30">
-                  <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white border-r border-b border-gray-300 rotate-45 z-20"></div>
-                  <div className="text-sm font-semibold text-gray-900 mb-2">{factory.factory_name}</div>
-                  <div className="space-y-1 text-xs text-gray-600">
-                    <div>Heat Index: <span className="font-medium">{factory.heat_index.toFixed(1)}</span></div>
-                    <div>Efficiency Rank: <span className="font-medium">{factory.efficiency_rank}/{factories.length}</span></div>
-                    <div>Coordinates: <span className="font-medium">{factory.latitude.toFixed(3)}, {factory.longitude.toFixed(3)}</span></div>
-                    <div>Thermal Value: <span className="font-medium">{factory.thermal_value.toFixed(1)}°C</span></div>
-                    <div>Baseline Temp: <span className="font-medium">{factory.baseline_temp.toFixed(1)}°C</span></div>
-                    {factory.output_MWh && (
-                      <div>Output: <span className="font-medium">{factory.output_MWh.toFixed(0)} MWh</span></div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-
-        {/* Map legend */}
-        <div className="absolute top-4 right-4 bg-white bg-opacity-95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-300 p-4">
-          <div className="text-xs font-semibold text-gray-900 mb-2">Heat Index</div>
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-3 bg-green-500 rounded-sm border border-white shadow-sm"></div>
-              <span className="text-xs text-gray-700">Low (0-3)</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-3 bg-yellow-500 rounded-sm border border-white shadow-sm"></div>
-              <span className="text-xs text-gray-700">Medium (4-6)</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-3 bg-red-500 rounded-sm border border-white shadow-sm"></div>
-              <span className="text-xs text-gray-700">High (7-10)</span>
-            </div>
-          </div>
-        </div>
-        
-        {/* Map coordinates display */}
-        <div className="absolute bottom-4 left-4 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded font-mono flex items-center space-x-2">
-          <span>🌍</span>
-          <span>World Map View</span>
-        </div>
-        
-        {/* Scale and projection info */}
-        <div className="absolute bottom-4 right-4 bg-white bg-opacity-90 px-2 py-1 rounded text-xs text-gray-700">
-          <div className="flex items-center space-x-2">
-            <div className="w-12 h-px bg-gray-800"></div>
-            <span>Web Mercator</span>
-          </div>
-        </div>
-      </div>
-    );
   };
 
   if (!factories.length) {
@@ -324,10 +267,35 @@ export const SatelliteHeatTracker: React.FC<SatelliteHeatTrackerProps> = ({ fact
         </button>
       </div>
 
-      {/* Map Overlay */}
+      {/* Interactive Leaflet Map */}
       {showMap && (
         <div className="mb-6">
-          <MapVisualization />
+          <div 
+            ref={mapRef} 
+            className="h-96 rounded-lg border border-gray-300 shadow-inner"
+            style={{ minHeight: '400px' }}
+          />
+          
+          {/* Map Legend */}
+          <div className="mt-4 flex items-center justify-between">
+            <div className="flex items-center space-x-6 text-sm">
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-3 bg-green-500 rounded-sm border border-white shadow-sm"></div>
+                <span className="text-gray-700">Low Heat (0-3)</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-3 bg-yellow-500 rounded-sm border border-white shadow-sm"></div>
+                <span className="text-gray-700">Medium Heat (4-6)</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-3 bg-red-500 rounded-sm border border-white shadow-sm"></div>
+                <span className="text-gray-700">High Heat (7-10)</span>
+              </div>
+            </div>
+            <div className="text-xs text-gray-500">
+              Data: Sentinel-3 SLSTR, Landsat TIRS
+            </div>
+          </div>
         </div>
       )}
 
