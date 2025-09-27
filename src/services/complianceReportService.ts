@@ -609,7 +609,8 @@ export class ComplianceReportService {
   }
 
   private static getPlantLocation(plantId: number): string {
-    const locations = ['Germany', 'Netherlands', 'Denmark', 'France'];
+    // For SEC reporting, Alpha Power is US-based, others are EU with potential US operations
+    const locations = ['US', 'Germany', 'Denmark', 'France'];
     return locations[plantId - 1] || 'Europe';
   }
 

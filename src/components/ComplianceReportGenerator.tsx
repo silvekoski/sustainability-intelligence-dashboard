@@ -161,15 +161,87 @@ Compliance Status: ${facility.complianceStatus.toUpperCase()}`;
         pdf.text('SEC Climate-Related Disclosures', margin, yPosition);
         yPosition += 15;
 
-        if (report.secDisclosure) {
-          const secText = `Climate-Related Risks Assessment:
-Physical Risks: Extreme weather events, sea level rise, temperature changes
-Transition Risks: Policy changes, technology shifts, market preferences
-Financial Impact: Estimated EUR ${(report.secDisclosure.financialImpacts.costs[0]?.amount || 0).toLocaleString()} in carbon costs
-Capital Expenditures: EUR ${(report.secDisclosure.financialImpacts.capitalExpenditures[0]?.amount || 0).toLocaleString()} in climate-related investments
+        // SEC Eligible Facilities Table
+        if (report.secEligibleFacilities && report.secEligibleFacilities.length > 0) {
+          pdf.setFontSize(14);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text('SEC Reporting Entities', margin, yPosition);
+          yPosition += 15;
+
+          // Table headers
+          pdf.setFontSize(10);
+          pdf.setFont('helvetica', 'bold');
+          const headers = ['Facility', 'Location', 'Sector', 'CO2e (t)', 'Energy (MWh)', 'Renewables %', 'Status'];
+          const colWidths = [35, 30, 25, 20, 25, 20, 25];
+          let xPos = margin;
+          
+          headers.forEach((header, i) => {
+            pdf.text(header, xPos, yPosition);
+            xPos += colWidths[i];
+          });
+          yPosition += 12;
+
+          // Table rows
+          pdf.setFont('helvetica', 'normal');
+          report.secEligibleFacilities.forEach((facility) => {
+            if (yPosition > pageHeight - 30) {
+              pdf.addPage();
+              yPosition = margin;
+            }
+
+            xPos = margin;
+            const rowData = [
+              facility.facility,
+              facility.location,
+              facility.sector.replace('Energy - ', ''),
+              facility.emissionsCO2e.toLocaleString(),
+              facility.energyMWh.toLocaleString(),
+              `${facility.renewableShare}%`,
+              facility.complianceStatus
+            ];
+
+            rowData.forEach((data, i) => {
+              pdf.text(data.toString(), xPos, yPosition);
+              xPos += colWidths[i];
+            });
+            yPosition += 10;
+          });
+          yPosition += 10;
+
+          // SEC Summary
+          const totalEmissions = report.secEligibleFacilities.reduce((sum, f) => sum + f.emissionsCO2e, 0);
+          const totalEnergy = report.secEligibleFacilities.reduce((sum, f) => sum + f.energyMWh, 0);
+          const avgRenewables = report.secEligibleFacilities.reduce((sum, f) => sum + f.renewableShare, 0) / report.secEligibleFacilities.length;
+          const compliantCount = report.secEligibleFacilities.filter(f => f.complianceStatus === 'Compliant').length;
+          const totalCount = report.secEligibleFacilities.length;
+
+          pdf.setFontSize(12);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text('SEC Reporting Summary:', margin, yPosition);
+          yPosition += 15;
+
+          pdf.setFont('helvetica', 'normal');
+          const summaryText = `Total GHG Emissions: ${totalEmissions.toLocaleString()} tCO2e
+Total Energy Consumption: ${totalEnergy.toLocaleString()} MWh (${avgRenewables.toFixed(1)}% renewables)
+SEC Reporting Entities: ${totalCount}
+Compliant Facilities: ${compliantCount} | Non-compliant: ${totalCount - compliantCount}`;
+
+          yPosition = addWrappedText(summaryText, margin, yPosition, contentWidth, 11);
+          yPosition += 15;
+
+          // Climate Risk Assessment
+          pdf.setFontSize(12);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text('Climate Risk Assessment:', margin, yPosition);
+          yPosition += 12;
+
+          pdf.setFont('helvetica', 'normal');
+          const riskText = `Physical Risks: Extreme weather events affecting power generation facilities
+Transition Risks: Carbon pricing and emission regulations, technology shifts
+Financial Impact: Estimated EUR ${(totalEmissions * 85).toLocaleString()} in annual carbon costs
 Scenario Analysis: 1.5°C and 3°C pathways analyzed with net-zero targets by 2050`;
 
-          yPosition = addWrappedText(secText, margin, yPosition, contentWidth, 11);
+          yPosition = addWrappedText(riskText, margin, yPosition, contentWidth, 11);
           yPosition += 15;
         }
       }
