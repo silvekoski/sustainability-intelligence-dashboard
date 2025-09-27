@@ -403,6 +403,8 @@ Data Act Compliance: Data interoperability and portability implemented`;
 
           <div className="flex items-center space-x-3">
             {secReport && (
+              <div className="flex items-center space-x-2 text-sm text-blue-600">
+              </div>
             )}
             
             <button
