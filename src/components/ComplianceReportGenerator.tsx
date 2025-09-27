@@ -42,19 +42,56 @@ export const ComplianceReportGenerator: React.FC = () => {
         pdf.setFontSize(fontSize);
         pdf.setFont('helvetica', isBold ? 'bold' : 'normal');
         
-        // Better text wrapping with proper width calculation
+        // Manual text wrapping to avoid jsPDF's character spacing issues
         const maxWidth = pageWidth - 2 * margin;
-        const lines = pdf.splitTextToSize(text, maxWidth);
+        
+        // Split text into paragraphs first
+        const paragraphs = text.split('\n');
+        const allLines: string[] = [];
+        
+        paragraphs.forEach(paragraph => {
+          if (paragraph.trim() === '') {
+            allLines.push('');
+            return;
+          }
+          
+          // Manual word wrapping
+          const words = paragraph.split(' ');
+          let currentLine = '';
+          
+          words.forEach(word => {
+            const testLine = currentLine ? `${currentLine} ${word}` : word;
+            const testWidth = pdf.getTextWidth(testLine);
+            
+            if (testWidth <= maxWidth) {
+              currentLine = testLine;
+            } else {
+              if (currentLine) {
+                allLines.push(currentLine);
+                currentLine = word;
+              } else {
+                // Word is too long, force break
+                allLines.push(word);
+              }
+            }
+          });
+          
+          if (currentLine) {
+            allLines.push(currentLine);
+          }
+        });
         
         // Check if we need a new page
-        if (yPosition + (lines.length * lineHeight) + spacing > pageHeight - margin) {
+        if (yPosition + (allLines.length * lineHeight) + spacing > pageHeight - margin) {
           pdf.addPage();
           yPosition = margin;
         }
         
         // Add each line with proper spacing
-        lines.forEach((line: string) => {
-          pdf.text(line, margin, yPosition);
+        allLines.forEach((line: string) => {
+          if (line.trim() !== '') {
+            pdf.text(line, margin, yPosition);
+          }
           yPosition += lineHeight;
         });
         
