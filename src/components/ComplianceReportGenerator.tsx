@@ -1,3 +1,33 @@
+I get error:
+
+plugin:vite:esbuild] Transform failed with 1 error:
+/home/project/src/services/complianceReportService.ts:118:11: ERROR: Expected ";" but found "{"
+/home/project/src/services/complianceReportService.ts:118:11
+Expected ";" but found "{"
+116|    }
+117|  
+118|      return {
+   |             ^
+119|        ...baseData,
+120|        secDisclosure,
+    at failureErrorWithLog (/home/project/node_modules/esbuild/lib/main.js:1462:15)
+    at eval (/home/project/node_modules/esbuild/lib/main.js:745:50)
+    at responseCallbacks.<computed> (/home/project/node_modules/esbuild/lib/main.js:612:9)
+    at handleIncomingPacket (/home/project/node_modules/esbuild/lib/main.js:667:12)
+    at Socket.readFromStdout (/home/project/node_modules/esbuild/lib/main.js:590:7)
+    at Socket.emit (node:events:30:11034)
+    at addChunk (node:internal/streams/readable:230:3174)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:230:6158)
+    at Readable.push (node:internal/streams/readable:230:6192)
+    at _0x3f7385.onStreamRead (node:internal/stream_base_commons:216:2625
+Click outside, press Esc key, or fix the code to dismiss.
+You can also disable this overlay by setting server.hmr.overlay to false in vite.config.ts.
+
+
+
+code
+======
+
 import React, { useState } from 'react';
 import { ComplianceReportService } from '../services/complianceReportService';
 import { Download, FileText, Loader2, Globe, Flag, Database } from 'lucide-react';
