@@ -403,13 +403,10 @@ Data Act Compliance: Data interoperability and portability implemented`;
 
           <div className="flex items-center space-x-3">
             {secReport && (
-              <button
-                onClick={() => setShowSecTable(!showSecTable)}
-                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-              >
+              <div className="flex items-center space-x-2 text-sm text-blue-600">
                 <FileText className="w-4 h-4" />
-                <span>{showSecTable ? 'Hide' : 'Show'} SEC Table</span>
-              </button>
+                <span>SEC table displayed below</span>
+              </div>
             )}
             
             <button
@@ -424,8 +421,12 @@ Data Act Compliance: Data interoperability and portability implemented`;
         </div>
 
         {/* SEC Compliance Table */}
-        {showSecTable && secReport && (
+        {secReport && (
           <div className="mt-6">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">SEC Climate Disclosure Extract</h3>
+              <p className="text-sm text-gray-600">US SEC reporting entities and compliance summary</p>
+            </div>
             <SECComplianceTable 
               facilities={secReport.facilities} 
               summary={secReport.summary} 
