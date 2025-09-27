@@ -34,6 +34,9 @@ export class ComplianceReportService {
   private static processDataForCompliance(data: PowerPlantData[], jurisdiction: 'EU' | 'US' | 'COMBINED'): EnhancedComplianceReportData {
     const metrics = calculateAggregatedMetrics(data);
     
+    // Extract SEC-eligible facilities (US companies + non-US with US operations)
+    const secEligibleFacilities = this.extractSECEligibleFacilities(data);
+    
     // Group data by plant
     const plantGroups = data.reduce((acc, record) => {
       if (!acc[record.plant_id]) {
@@ -55,6 +58,7 @@ export class ComplianceReportService {
       return {
         id: first.plant_id.toString(),
         name: first.plant_name,
+        secEligibleFacilities,
         location: this.getPlantLocation(first.plant_id),
         sector: this.getSectorFromFuel(first.fuel_type),
         totalEmissions: Math.round(totalEmissions),
@@ -311,6 +315,99 @@ export class ComplianceReportService {
         loggedEvents: ['data_access', 'data_export', 'data_sharing', 'report_generation', 'user_authentication']
       }
     };
+  }
+
+  // Extract facilities subject to SEC climate disclosure requirements
+  private static extractSECEligibleFacilities(data: PowerPlantData[]) {
+    // Group data by plant
+    const plantGroups = data.reduce((acc, record) => {
+      if (!acc[record.plant_id]) {
+        acc[record.plant_id] = [];
+      }
+      acc[record.plant_id].push(record);
+      return acc;
+    }, {} as Record<number, PowerPlantData[]>);
+
+    return Object.values(plantGroups).map((plantData: PowerPlantData[]) => {
+      const first = plantData[0];
+      const totalElectricity = plantData.reduce((sum, d) => sum + d.electricity_output_MWh, 0);
+      const totalHeat = plantData.reduce((sum, d) => sum + d.heat_output_MWh, 0);
+      const totalFuel = plantData.reduce((sum, d) => sum + d.fuel_consumption_MWh, 0);
+      const totalCO2 = plantData.reduce((sum, d) => sum + d.CO2_emissions_tonnes, 0);
+      const totalCH4 = plantData.reduce((sum, d) => sum + d.CH4_emissions_kg, 0) / 1000; // Convert to tonnes
+      const totalN2O = plantData.reduce((sum, d) => sum + d.N2O_emissions_kg, 0) / 1000; // Convert to tonnes
+      const totalCO2e = totalCO2 + (totalCH4 * 25) + (totalN2O * 298); // GWP factors
+      const avgEfficiency = plantData.reduce((sum, d) => sum + d.efficiency_percent, 0) / plantData.length;
+      
+      // Determine SEC eligibility and location
+      const location = this.getPlantLocation(first.plant_id);
+      const isUSCompany = location === 'US' || first.plant_id === 1; // Alpha Power as US company
+      const hasUSOperations = location !== 'US' && first.plant_id <= 2; // Beta Energy has US operations
+      const secEligible = isUSCompany || hasUSOperations;
+      
+      if (!secEligible) return null;
+      
+      // Calculate renewable share (CHP plants considered more renewable-like)
+      const renewableShare = first.plant_name.includes('CHP') ? 25 : 
+                           first.fuel_type === 'Natural Gas' ? 15 : 5;
+      
+      // Simulate allowances (110% of emissions for compliance buffer)
+      const allowancesAllocated = Math.ceil(totalCO2e * 1.1);
+      const allowancesUsed = Math.round(totalCO2e);
+      const complianceStatus = allowancesUsed <= allowancesAllocated ? 'Compliant' : 
+                              allowancesUsed > allowancesAllocated * 1.2 ? 'Shortfall' : 'Surplus';
+      
+      // Generate SEC disclosure notes
+      const secNote = this.generateSECDisclosureNote(first, totalCO2e, complianceStatus);
+      
+      return {
+        facility: first.plant_name,
+        location: isUSCompany ? 'US' : `${location} (US Ops)`,
+        sector: this.getSECSector(first.fuel_type),
+        emissionsCO2e: Math.round(totalCO2e),
+        emissionsCO2: Math.round(totalCO2),
+        emissionsCH4: Math.round(totalCH4 * 1000) / 1000, // Keep 3 decimals
+        emissionsN2O: Math.round(totalN2O * 1000) / 1000, // Keep 3 decimals
+        energyMWh: Math.round(totalElectricity + totalHeat),
+        renewableShare,
+        allowancesAllocated,
+        allowancesUsed,
+        complianceStatus,
+        secNote
+      };
+    }).filter(Boolean); // Remove null entries
+  }
+
+  private static getSECSector(fuelType: string): string {
+    switch (fuelType.toLowerCase()) {
+      case 'coal': return 'Energy - Coal';
+      case 'natural gas': return 'Energy - Gas';
+      case 'diesel': return 'Energy - Oil';
+      default: return 'Energy';
+    }
+  }
+
+  private static generateSECDisclosureNote(plant: PowerPlantData, totalCO2e: number, status: string): string {
+    const riskLevel = totalCO2e > 2000 ? 'high' : totalCO2e > 1000 ? 'medium' : 'low';
+    const baseNotes = [
+      'Disclosed physical climate risks',
+      'SEC Scope 1+2 disclosure filed',
+      'Climate governance framework implemented',
+      'Financial exposure quantified',
+      'Transition risk assessment completed'
+    ];
+    
+    let note = baseNotes[plant.plant_id - 1] || baseNotes[0];
+    
+    if (riskLevel === 'high') {
+      note += '; Material climate risks identified';
+    }
+    
+    if (status !== 'Compliant') {
+      note += '; Enhanced monitoring required';
+    }
+    
+    return note;
   }
 
   private static generateReport(data: EnhancedComplianceReportData): ComplianceReport {

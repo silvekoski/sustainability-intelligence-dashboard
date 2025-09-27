@@ -174,10 +174,27 @@ export interface DataPermission {
 // Enhanced Compliance Report Data
 export interface EnhancedComplianceReportData extends ComplianceReportData {
   secDisclosure?: SECClimateDisclosure;
+  secEligibleFacilities?: SECFacilityData[];
   dataActCompliance: DataActCompliance;
   complianceMapping: {
     eu: string[];
     us: string[];
     dataAct: string[];
   };
+}
+
+export interface SECFacilityData {
+  facility: string;
+  location: string;
+  sector: string;
+  emissionsCO2e: number;
+  emissionsCO2: number;
+  emissionsCH4: number;
+  emissionsN2O: number;
+  energyMWh: number;
+  renewableShare: number;
+  allowancesAllocated: number;
+  allowancesUsed: number;
+  complianceStatus: string;
+  secNote: string;
 }
