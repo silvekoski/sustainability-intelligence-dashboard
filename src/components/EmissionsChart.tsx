@@ -114,11 +114,11 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
       <div className="relative">
         {/* Y-axis labels */}
         <div className="absolute left-0 top-0 h-80 flex flex-col justify-between text-xs text-gray-500 -ml-20">
-          <span>{scaledMax.toFixed(0)} tCO₂e</span>
-          <span>{(scaledMin + effectiveRange * 0.75).toFixed(0)} tCO₂e</span>
-          <span>{(scaledMin + effectiveRange * 0.5).toFixed(0)} tCO₂e</span>
-          <span>{(scaledMin + effectiveRange * 0.25).toFixed(0)} tCO₂e</span>
-          <span>{scaledMin.toFixed(0)} tCO₂e</span>
+          <span>{scaledMax.toFixed(0)}</span>
+          <span>{(scaledMin + effectiveRange * 0.75).toFixed(0)}</span>
+          <span>{(scaledMin + effectiveRange * 0.5).toFixed(0)}</span>
+          <span>{(scaledMin + effectiveRange * 0.25).toFixed(0)}</span>
+          <span>{scaledMin.toFixed(0)}</span>
         </div>
 
         {/* Grid lines */}
