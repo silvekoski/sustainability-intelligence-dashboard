@@ -11,8 +11,14 @@ export const Header = () => {
   const { currentOrganization, licenseInfo } = useOrganization();
   
   const handleLogout = async () => {
+    console.log('Header logout clicked');
     setShowUserMenu(false);
-    await logout();
+    try {
+      await logout();
+      console.log('Logout completed');
+    } catch (error) {
+      console.error('Header logout error:', error);
+    }
   };
 
   // Close menu when clicking outside

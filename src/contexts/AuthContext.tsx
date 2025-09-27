@@ -227,12 +227,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const logout = async () => {
+    console.log('Logout initiated');
     setState(prev => ({ ...prev, loading: true }));
     
     try {
-      await AuthService.logout();
+      const result = await AuthService.logout();
+      console.log('Logout result:', result);
+      
+      if (result.error) {
+        console.error('Logout error:', result.error);
+      }
+      
+      // Force clear state regardless of API response
+      setState({
+        user: null,
+        profile: null,
+        loading: false,
+        initialized: true,
+      });
     } catch (error) {
       console.error('Logout error:', error);
+      // Force clear state even on error
       setState({
         user: null,
         profile: null,
