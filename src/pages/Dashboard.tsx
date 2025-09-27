@@ -1,13 +1,15 @@
 import React from 'react';
+import { useState } from 'react';
 import { MetricCard } from '../components/MetricCard';
 import { PlantStatusCard } from '../components/PlantStatusCard';
 import { EmissionsChart } from '../components/EmissionsChart';
 import { EfficiencyGauge } from '../components/EfficiencyGauge';
 import { FactoryComparisonPanel } from '../components/FactoryComparisonPanel';
-import { PermitsStatusWidget } from '../components/PermitsStatusWidget';
 import { ComplianceReportGenerator } from '../components/ComplianceReportGenerator';
 import { EUPermitsCard } from '../components/EUPermitsCard';
+import { CSVUploadManager } from '../components/CSVUploadManager';
 import { useData } from '../hooks/useData';
+import { PowerPlantData } from '../types';
 import { 
   Zap, 
   Factory, 
@@ -20,7 +22,12 @@ import {
 } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
-  const { plantSummaries, emissionsTrends, loading, error, metrics, changes } = useData();
+  const [csvData, setCsvData] = useState<PowerPlantData[] | null>(undefined);
+  const { plantSummaries, emissionsTrends, loading, error, metrics, changes } = useData(csvData);
+
+  const handleDataChange = (newData: PowerPlantData[] | null) => {
+    setCsvData(newData);
+  };
 
   if (loading) {
     return (
@@ -45,6 +52,20 @@ export const Dashboard: React.FC = () => {
     );
   }
 
+  // Show message when no data is available
+  if (csvData === null || (Array.isArray(csvData) && csvData.length === 0)) {
+    return (
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <CSVUploadManager onDataChange={handleDataChange} currentData={csvData} />
+        
+        <div className="text-center py-12">
+          <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">No Data Available</h2>
+          <p className="text-gray-600 mb-6">Upload a CSV file to view your power plant data and analytics.</p>
+        </div>
+      </div>
+    );
+  }
   const optimalPlants = plantSummaries.filter(p => p.status === 'optimal').length;
   const warningPlants = plantSummaries.filter(p => p.status === 'warning').length;
   const criticalPlants = plantSummaries.filter(p => p.status === 'critical').length;
@@ -61,6 +82,9 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
+      {/* CSV Upload Manager */}
+      <CSVUploadManager onDataChange={handleDataChange} currentData={csvData} />
+
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <MetricCard

@@ -1,5 +1,7 @@
 import { PowerPlantData, PlantSummary, EmissionsTrend } from '../types';
 
+// Note: parseCSVData has been moved to CSVService.parseCSVData
+// This is kept for backward compatibility
 export const parseCSVData = (csvText: string): PowerPlantData[] => {
   const lines = csvText.trim().split('\n');
   const headers = lines[0].split(',');
