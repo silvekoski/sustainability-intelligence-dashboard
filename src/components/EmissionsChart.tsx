@@ -27,6 +27,21 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
   const trendPercentage = firstValue > 0 ? ((lastValue - firstValue) / firstValue) * 100 : 0;
   const isIncreasing = trendPercentage > 0;
 
+  // Calculate day-to-day changes for better comparison
+  const dayChanges = data.map((item, index) => {
+    if (index === 0) return { ...item, change: 0, changePercent: 0 };
+    const prevValue = data[index - 1].total;
+    const change = item.total - prevValue;
+    const changePercent = prevValue > 0 ? (change / prevValue) * 100 : 0;
+    return { ...item, change, changePercent };
+  });
+
+  // Enhanced scaling - use a more dynamic range
+  const valueRange = maxValue - minValue;
+  const scaledMin = Math.max(0, minValue - (valueRange * 0.1)); // Add 10% padding below
+  const scaledMax = maxValue + (valueRange * 0.1); // Add 10% padding above
+  const effectiveRange = scaledMax - scaledMin;
+
   // Enhanced color scheme
   const colors = {
     CO2: {
@@ -67,6 +82,24 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
           </span>
         </div>
       </div>
+
+      {/* Day-to-day comparison summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+        <div className="text-center">
+          <div className="text-2xl font-bold text-gray-900">{data[0]?.total.toFixed(0)}t</div>
+          <div className="text-sm text-gray-600">Jan 1 Total</div>
+        </div>
+        <div className="text-center">
+          <div className="text-2xl font-bold text-gray-900">{data[data.length - 1]?.total.toFixed(0)}t</div>
+          <div className="text-sm text-gray-600">Jan 2 Total</div>
+        </div>
+        <div className="text-center">
+          <div className={`text-2xl font-bold ${isIncreasing ? 'text-red-600' : 'text-green-600'}`}>
+            {isIncreasing ? '+' : ''}{(lastValue - firstValue).toFixed(0)}t
+          </div>
+          <div className="text-sm text-gray-600">Net Change</div>
+        </div>
+      </div>
       
       {/* Enhanced Legend */}
       <div className="flex items-center justify-between mb-6 p-4 bg-gray-50 rounded-lg">
@@ -93,16 +126,16 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
       {/* Chart Container */}
       <div className="relative">
         {/* Y-axis labels */}
-        <div className="absolute left-0 top-0 h-64 flex flex-col justify-between text-xs text-gray-500 -ml-12">
-          <span>{maxValue.toFixed(0)}t</span>
-          <span>{(maxValue * 0.75).toFixed(0)}t</span>
-          <span>{(maxValue * 0.5).toFixed(0)}t</span>
-          <span>{(maxValue * 0.25).toFixed(0)}t</span>
-          <span>0t</span>
+        <div className="absolute left-0 top-0 h-80 flex flex-col justify-between text-xs text-gray-500 -ml-16">
+          <span>{scaledMax.toFixed(0)}t</span>
+          <span>{(scaledMin + effectiveRange * 0.75).toFixed(0)}t</span>
+          <span>{(scaledMin + effectiveRange * 0.5).toFixed(0)}t</span>
+          <span>{(scaledMin + effectiveRange * 0.25).toFixed(0)}t</span>
+          <span>{scaledMin.toFixed(0)}t</span>
         </div>
 
         {/* Grid lines */}
-        <div className="absolute inset-0 h-64">
+        <div className="absolute inset-0 h-80">
           {[0, 25, 50, 75, 100].map((percent) => (
             <div
               key={percent}
@@ -115,7 +148,7 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
         {/* Average line */}
         <div
           className="absolute w-full border-t-2 border-dashed border-blue-300 z-10"
-          style={{ bottom: `${(avgValue / maxValue) * 100}%` }}
+          style={{ bottom: `${((avgValue - scaledMin) / effectiveRange) * 100}%` }}
         >
           <span className="absolute right-0 -top-5 text-xs text-blue-600 bg-white px-2 py-1 rounded shadow-sm">
             Avg: {avgValue.toFixed(0)}t
@@ -123,17 +156,18 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
         </div>
         
         {/* Chart bars */}
-        <div className="h-64 flex items-end justify-between space-x-1 relative z-20">
-          {data.map((item, index) => {
-            const co2Height = (item.CO2 / maxValue) * 100;
-            const ch4Height = (item.CH4 / maxValue) * 100;
-            const n2oHeight = (item.N2O / maxValue) * 100;
-            const totalHeight = (item.total / maxValue) * 100;
+        <div className="h-80 flex items-end justify-between space-x-2 relative z-20">
+          {dayChanges.map((item, index) => {
+            // Use scaled values for better visual differentiation
+            const co2Height = ((item.CO2 - scaledMin) / effectiveRange) * 100;
+            const ch4Height = ((item.CH4 - scaledMin) / effectiveRange) * 100;
+            const n2oHeight = ((item.N2O - scaledMin) / effectiveRange) * 100;
+            const totalHeight = ((item.total - scaledMin) / effectiveRange) * 100;
             
             return (
               <div key={index} className="flex-1 flex flex-col items-center group">
                 {/* Stacked bar */}
-                <div className="w-full flex flex-col justify-end h-48 relative">
+                <div className="w-full flex flex-col justify-end h-64 relative">
                   {/* Tooltip */}
                   <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-30">
                     <div className="bg-gray-900 text-white text-xs rounded-lg p-3 shadow-lg min-w-max">
@@ -171,6 +205,14 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
                             <span>Total:</span>
                             <span>{item.total.toFixed(1)}t</span>
                           </div>
+                          {index > 0 && (
+                            <div className="flex items-center justify-between space-x-4 text-xs mt-1">
+                              <span>Change:</span>
+                              <span className={item.change >= 0 ? 'text-red-300' : 'text-green-300'}>
+                                {item.change >= 0 ? '+' : ''}{item.change.toFixed(1)}t ({item.changePercent.toFixed(1)}%)
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
                       {/* Tooltip arrow */}
@@ -178,9 +220,20 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
                     </div>
                   </div>
 
+                  {/* Day change indicator */}
+                  {index > 0 && (
+                    <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <div className={`text-xs font-bold px-2 py-1 rounded ${
+                        item.change >= 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                      }`}>
+                        {item.change >= 0 ? '+' : ''}{item.change.toFixed(0)}t
+                      </div>
+                    </div>
+                  )}
+
                   {/* CO2 bar */}
                   <div 
-                    className="w-full rounded-t-sm transition-all duration-300 group-hover:brightness-110 shadow-sm"
+                    className="w-full rounded-t-sm transition-all duration-300 group-hover:brightness-110 shadow-sm border-r border-white"
                     style={{ 
                       height: `${co2Height}%`,
                       backgroundColor: colors.CO2.primary,
@@ -190,7 +243,7 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
                   
                   {/* CH4 bar */}
                   <div 
-                    className="w-full transition-all duration-300 group-hover:brightness-110 shadow-sm"
+                    className="w-full transition-all duration-300 group-hover:brightness-110 shadow-sm border-r border-white"
                     style={{ 
                       height: `${ch4Height}%`,
                       backgroundColor: colors.CH4.primary,
@@ -200,7 +253,7 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
                   
                   {/* N2O bar */}
                   <div 
-                    className="w-full rounded-b-sm transition-all duration-300 group-hover:brightness-110 shadow-sm"
+                    className="w-full rounded-b-sm transition-all duration-300 group-hover:brightness-110 shadow-sm border-r border-white"
                     style={{ 
                       height: `${n2oHeight}%`,
                       backgroundColor: colors.N2O.primary,
@@ -217,12 +270,21 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
                 </div>
                 
                 {/* Date label */}
-                <p className="text-xs text-gray-500 mt-3 text-center font-medium">
+                <div className="mt-4 text-center">
+                  <p className="text-xs text-gray-500 font-medium">
                   {new Date(item.date).toLocaleDateString('en-US', { 
                     month: 'short', 
                     day: 'numeric' 
                   })}
-                </p>
+                  </p>
+                  {index > 0 && (
+                    <p className={`text-xs font-bold mt-1 ${
+                      item.change >= 0 ? 'text-red-600' : 'text-green-600'
+                    }`}>
+                      {item.change >= 0 ? '↗' : '↘'} {Math.abs(item.changePercent).toFixed(1)}%
+                    </p>
+                  )}
+                </div>
               </div>
             );
           })}
