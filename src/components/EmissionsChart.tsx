@@ -27,14 +27,14 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
         </div>
       </div>
       
-      <div className="h-64 flex items-end justify-between space-x-2">
-        {data.slice(-7).map((item, index) => { // Show last 7 days for better visibility
+      <div className="h-64 flex items-end justify-between space-x-1 overflow-x-auto">
+        {data.map((item, index) => { // Show all 30 days
           const co2Height = (item.CO2 / maxValue) * 100;
           const ch4Height = (item.CH4 / maxValue) * 100;
           const n2oHeight = (item.N2O / maxValue) * 100;
           
           return (
-            <div key={index} className="flex-1 flex flex-col items-center">
+            <div key={index} className="flex-shrink-0 w-6 flex flex-col items-center">
               <div className="w-full flex flex-col justify-end h-48 space-y-1">
                 <div 
                   className="w-full bg-red-500 rounded-t-sm transition-all hover:bg-red-600"
@@ -52,7 +52,7 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
                   title={`N₂O: ${item.N2O.toFixed(3)} tonnes`}
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-2 text-center">
+              <p className="text-xs text-gray-500 mt-2 text-center transform -rotate-45 origin-center whitespace-nowrap">
                 {new Date(item.date).toLocaleDateString('en-US', { 
                   month: 'numeric', 
                   day: 'numeric' 
