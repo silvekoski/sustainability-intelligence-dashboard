@@ -121,7 +121,6 @@ export class ComplianceReportService {
       complianceMapping
     };
   }
-  }
 
   private static generateSECDisclosure(
     data: PowerPlantData[], 
