@@ -118,6 +118,21 @@ export class AuthService {
     }
   }
 
+  static async updateProfile(dto: UpdateProfileData) {
+    try {
+      const { data, error } = await supabase.auth.updateUser({
+        data: {
+          full_name: dto.full_name,
+          avatar_url: dto.avatar_url,
+        },
+      });
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error: any) {
+      return { data: null, error: this.formatError(error) };
+    }
+  }
+
   // Delete user account
   static async deleteAccount() {
     try {
