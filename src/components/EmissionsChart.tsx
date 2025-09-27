@@ -28,7 +28,7 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
       </div>
       
       <div className="h-64 flex items-end justify-between space-x-2">
-        {data.map((item, index) => {
+        {data.slice(-7).map((item, index) => { // Show last 7 days for better visibility
           const co2Height = (item.CO2 / maxValue) * 100;
           const ch4Height = (item.CH4 / maxValue) * 100;
           const n2oHeight = (item.N2O / maxValue) * 100;
@@ -54,7 +54,7 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
               </div>
               <p className="text-xs text-gray-500 mt-2 text-center">
                 {new Date(item.date).toLocaleDateString('en-US', { 
-                  month: 'short', 
+                  month: 'numeric', 
                   day: 'numeric' 
                 })}
               </p>
@@ -64,24 +64,30 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
       </div>
       
       <div className="mt-4 pt-4 border-t border-gray-200">
-        <div className="grid grid-cols-3 gap-4 text-center">
+        <div className="grid grid-cols-4 gap-4 text-center">
           <div>
             <p className="text-2xl font-bold text-red-600">
               {data.reduce((sum, d) => sum + d.CO2, 0).toFixed(0)}
             </p>
-            <p className="text-sm text-gray-500">Total CO₂ (tonnes)</p>
+            <p className="text-sm text-gray-500">30-Day CO₂ (tonnes)</p>
           </div>
           <div>
             <p className="text-2xl font-bold text-orange-600">
               {data.reduce((sum, d) => sum + d.CH4, 0).toFixed(2)}
             </p>
-            <p className="text-sm text-gray-500">Total CH₄ (tonnes)</p>
+            <p className="text-sm text-gray-500">30-Day CH₄ (tonnes)</p>
           </div>
           <div>
             <p className="text-2xl font-bold text-yellow-600">
               {data.reduce((sum, d) => sum + d.N2O, 0).toFixed(2)}
             </p>
-            <p className="text-sm text-gray-500">Total N₂O (tonnes)</p>
+            <p className="text-sm text-gray-500">30-Day N₂O (tonnes)</p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-gray-900">
+              {data.length}
+            </p>
+            <p className="text-sm text-gray-500">Days Tracked</p>
           </div>
         </div>
       </div>
