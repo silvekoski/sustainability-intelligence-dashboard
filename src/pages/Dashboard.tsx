@@ -5,6 +5,7 @@ import { EmissionsChart } from '../components/EmissionsChart';
 import { EfficiencyGauge } from '../components/EfficiencyGauge';
 import { FactoryComparisonPanel } from '../components/FactoryComparisonPanel';
 import { PermitsStatusWidget } from '../components/PermitsStatusWidget';
+import { ComplianceReportGenerator } from '../components/ComplianceReportGenerator';
 import { useData } from '../hooks/useData';
 import { 
   Zap, 
@@ -157,6 +158,11 @@ export const Dashboard: React.FC = () => {
       {/* Factory Comparison & Compliance Panel */}
       <div className="mb-8">
         <FactoryComparisonPanel />
+      </div>
+
+      {/* EU Compliance Report Generator */}
+      <div className="mb-8">
+        <ComplianceReportGenerator />
       </div>
 
       {/* Sustainability Insights */}
