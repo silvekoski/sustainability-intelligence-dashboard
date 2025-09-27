@@ -12,7 +12,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children, 
   requireAuth = true 
 }) => {
-  const { user, loading, initialized } = useAuth();
+  // Temporarily disable auth - always allow access
+  return <>{children}</>;
+  
+  /* const { user, loading, initialized } = useAuth();
   const location = useLocation();
 
   // Show loading spinner while auth is initializing
@@ -37,5 +40,5 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/dashboard" replace />;
   }
 
-  return <>{children}</>;
+  return <>{children}</>; */
 };

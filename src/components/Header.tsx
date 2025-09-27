@@ -5,11 +5,16 @@ import { useAuth } from '../contexts/AuthContext';
 
 export const Header = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const { user, profile, logout } = useAuth();
+  // Temporarily disable auth
+  const user = { email: 'demo@example.com' };
+  const profile = { full_name: 'Demo User' };
+  const logout = async () => {};
+  
+  /* const { user, profile, logout } = useAuth();
 
   const handleLogout = async () => {
     await logout();
-  };
+  }; */
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
