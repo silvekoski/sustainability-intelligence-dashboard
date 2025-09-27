@@ -175,14 +175,14 @@ export const Dashboard: React.FC = () => {
 
       {/* Dashboard Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-      {/* Permits Status Widget */}
-      <div className="mb-8">
-        <PermitsStatusWidget input={permitsData} />
-      </div>
-
       {/* Factory Comparison Bar */}
       <div className="mb-8">
         <FactoryComparisonBar factories={factoryData} />
+      </div>
+
+      {/* Permits Status Widget */}
+      <div className="mb-8">
+        <PermitsStatusWidget input={permitsData} />
       </div>
 
       {/* Satellite Heat Tracker */}
