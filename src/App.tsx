@@ -8,7 +8,12 @@ import { LoginForm } from './components/auth/LoginForm';
 import { RegisterForm } from './components/auth/RegisterForm';
 import { ForgotPasswordForm } from './components/auth/ForgotPasswordForm';
 import { ProfileSettings } from './components/auth/ProfileSettings';
-import { Dashboard } from './pages/Dashboard';
+import { DashboardOverview } from './pages/DashboardOverview';
+import { DashboardAnalytics } from './pages/DashboardAnalytics';
+import { DashboardPlants } from './pages/DashboardPlants';
+import { DashboardCompliance } from './pages/DashboardCompliance';
+import { DashboardReports } from './pages/DashboardReports';
+import { DashboardBenchmarking } from './pages/DashboardBenchmarking';
 
 function App() {
   return (
@@ -41,7 +46,12 @@ function App() {
             </ProtectedRoute>
           }>
             <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="dashboard" element={<DashboardOverview />} />
+            <Route path="dashboard/analytics" element={<DashboardAnalytics />} />
+            <Route path="dashboard/plants" element={<DashboardPlants />} />
+            <Route path="dashboard/compliance" element={<DashboardCompliance />} />
+            <Route path="dashboard/reports" element={<DashboardReports />} />
+            <Route path="dashboard/benchmarking" element={<DashboardBenchmarking />} />
             <Route path="settings" element={<ProfileSettings />} />
           </Route>
 

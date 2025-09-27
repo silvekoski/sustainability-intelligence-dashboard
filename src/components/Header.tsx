@@ -12,15 +12,9 @@ export const Header = () => {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4">
+    <header className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <img 
-            src="/esboost-logo.svg" 
-            alt="ESBoost" 
-            className="h-8 w-auto"
-          />
-          <div className="h-6 w-px bg-gray-300" />
+        <div>
           <h1 className="text-xl font-semibold text-gray-900">
             Sustainability Intelligence Dashboard
           </h1>
