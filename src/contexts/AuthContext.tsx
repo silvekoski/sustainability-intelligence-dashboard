@@ -231,30 +231,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setState(prev => ({ ...prev, loading: true }));
     
     try {
+      // Clear state immediately to prevent UI issues
+      setState({
+        user: null,
+        profile: null,
+        loading: false,
+        initialized: true,
+      });
+      
       const result = await AuthService.logout();
       console.log('Logout result:', result);
       
       if (result.error) {
         console.error('Logout error:', result.error);
       }
-      
-      // Force clear state regardless of API response
-      setState({
-        user: null,
-        profile: null,
-        loading: false,
-        initialized: true,
-      });
     } catch (error) {
       console.error('Logout error:', error);
-      // Force clear state even on error
-      setState({
-        user: null,
-        profile: null,
-        loading: false,
-        initialized: true,
-      });
     }
+    
+    // Force page reload to ensure clean state
+    window.location.href = '/auth/login';
   };
 
   const resetPassword = async (email: string) => {

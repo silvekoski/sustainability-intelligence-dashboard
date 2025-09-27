@@ -18,6 +18,8 @@ export const Header = () => {
       console.log('Logout completed');
     } catch (error) {
       console.error('Header logout error:', error);
+      // Force navigation even if logout fails
+      window.location.href = '/auth/login';
     }
   };
 
