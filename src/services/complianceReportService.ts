@@ -626,7 +626,7 @@ export class ComplianceReportService {
   private static calculateRenewableShare(data: PowerPlantData[]): number {
     // For this demo, calculate based on CHP plants (more efficient = more renewable-like)
     const totalOutput = data.reduce((sum, d) => sum + d.electricity_output_MWh, 0);
-    const chpOutput = data.filter(d => d.plant_name.includes('CHP')).reduce((sum, d) => sum + d.electricity_output_MWh, 0);
+    const chpOutput = data.filter(d => d.plant_name?.includes('CHP')).reduce((sum, d) => sum + d.electricity_output_MWh, 0);
     return Math.round((chpOutput / totalOutput) * 100 * 100) / 100; // Round to 2 decimals
   }
 
