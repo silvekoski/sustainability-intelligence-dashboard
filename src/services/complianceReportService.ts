@@ -1,9 +1,18 @@
 import { ComplianceReportData, ComplianceReport, ReportSection } from '../types/compliance';
+import { 
+  EnhancedComplianceReportData, 
+  SECClimateDisclosure, 
+  DataActCompliance,
+  ClimateRisk,
+  FinancialImpact,
+  ClimateScenario,
+  NetZeroPathway
+} from '../types/compliance';
 import { PowerPlantData } from '../types';
 import { parseCSVData, calculateAggregatedMetrics } from '../utils/dataParser';
 
 export class ComplianceReportService {
-  static async generateComplianceReport(): Promise<ComplianceReport> {
+  static async generateComplianceReport(jurisdiction: 'EU' | 'US' | 'COMBINED' = 'COMBINED'): Promise<ComplianceReport> {
     try {
       // Load and process data
       const response = await fetch('/sample_data.csv');
@@ -13,7 +22,7 @@ export class ComplianceReportService {
       
       const csvText = await response.text();
       const parsedData = parseCSVData(csvText);
-      const reportData = this.processDataForCompliance(parsedData);
+      const reportData = this.processDataForCompliance(parsedData, jurisdiction);
       
       return this.generateReport(reportData);
     } catch (error) {
@@ -22,7 +31,7 @@ export class ComplianceReportService {
     }
   }
 
-  private static processDataForCompliance(data: PowerPlantData[]): ComplianceReportData {
+  private static processDataForCompliance(data: PowerPlantData[], jurisdiction: 'EU' | 'US' | 'COMBINED'): EnhancedComplianceReportData {
     const metrics = calculateAggregatedMetrics(data);
     
     // Group data by plant
@@ -59,7 +68,7 @@ export class ComplianceReportService {
     const totalCH4 = data.reduce((sum, d) => sum + d.CH4_emissions_kg, 0) / 1000; // Convert to tonnes
     const totalN2O = data.reduce((sum, d) => sum + d.N2O_emissions_kg, 0) / 1000; // Convert to tonnes
 
-    return {
+    const baseData = {
       reportingPeriod: {
         startDate: '2025-01-01',
         endDate: '2025-01-02',
@@ -88,9 +97,224 @@ export class ComplianceReportService {
         verificationStatus: 'verified'
       }
     };
+
+    // Add SEC Climate Disclosure if US or COMBINED
+    let secDisclosure: SECClimateDisclosure | undefined;
+    if (jurisdiction === 'US' || jurisdiction === 'COMBINED') {
+      secDisclosure = this.generateSECDisclosure(data, metrics, totalCH4, totalN2O);
+    }
+
+    // Add EU Data Act Compliance
+    const dataActCompliance = this.generateDataActCompliance();
+
+    // Generate compliance mapping
+    const complianceMapping = {
+      eu: ['CSRD', 'ESRS E1', 'ESRS E2', 'EU ETS', 'MRV', 'UNFCCC'],
+      us: ['SEC Climate Rule', 'SEC 10-K', 'SEC 8-K'],
+      dataAct: ['Data Interoperability', 'Data Portability', 'Access Controls', 'Audit Logging']
+    };
   }
 
-  private static generateReport(data: ComplianceReportData): ComplianceReport {
+    return {
+      ...baseData,
+      secDisclosure,
+      dataActCompliance,
+      complianceMapping
+    };
+  }
+
+  private static generateSECDisclosure(
+    data: PowerPlantData[], 
+    metrics: any, 
+    totalCH4: number, 
+    totalN2O: number
+  ): SECClimateDisclosure {
+    return {
+      ghgEmissions: {
+        scope1: metrics.totalEmissions + totalCH4 + totalN2O, // Direct emissions
+        scope2: metrics.totalElectricity * 0.4, // Estimated grid emissions
+        scope3: metrics.totalElectricity * 0.1, // Estimated upstream emissions
+        methodology: 'EPA GHG Reporting Program methodologies and IPCC Guidelines',
+        verificationStatus: 'verified'
+      },
+      climateRisks: {
+        physicalRisks: [
+          {
+            type: 'Acute Physical Risk',
+            description: 'Extreme weather events affecting power generation facilities',
+            timeHorizon: 'short',
+            likelihood: 'medium',
+            impact: 'high',
+            mitigationMeasures: ['Emergency response protocols', 'Infrastructure hardening', 'Insurance coverage']
+          },
+          {
+            type: 'Chronic Physical Risk',
+            description: 'Rising temperatures affecting cooling efficiency',
+            timeHorizon: 'long',
+            likelihood: 'high',
+            impact: 'medium',
+            mitigationMeasures: ['Cooling system upgrades', 'Alternative cooling technologies']
+          }
+        ],
+        transitionRisks: [
+          {
+            type: 'Policy and Legal Risk',
+            description: 'Carbon pricing and emission regulations',
+            timeHorizon: 'medium',
+            likelihood: 'high',
+            impact: 'high',
+            mitigationMeasures: ['Fuel switching', 'Efficiency improvements', 'Carbon capture technology']
+          },
+          {
+            type: 'Technology Risk',
+            description: 'Stranded assets from renewable energy transition',
+            timeHorizon: 'long',
+            likelihood: 'medium',
+            impact: 'high',
+            mitigationMeasures: ['Portfolio diversification', 'Renewable energy investments']
+          }
+        ]
+      },
+      financialImpacts: {
+        costs: [
+          {
+            category: 'Carbon Compliance Costs',
+            amount: metrics.totalEmissions * 85, // EUR 85/tonne estimated
+            currency: 'EUR',
+            description: 'EU ETS allowance costs and compliance expenses',
+            timeframe: '2025'
+          },
+          {
+            category: 'Transition Investments',
+            amount: 15000000, // 15M EUR estimated
+            currency: 'EUR',
+            description: 'Investments in efficiency improvements and fuel switching',
+            timeframe: '2025-2030'
+          }
+        ],
+        revenues: [
+          {
+            category: 'Green Energy Premium',
+            amount: metrics.totalElectricity * 5, // 5 EUR/MWh premium
+            currency: 'EUR',
+            description: 'Premium pricing for low-carbon electricity',
+            timeframe: '2025'
+          }
+        ],
+        capitalExpenditures: [
+          {
+            category: 'Decarbonization CapEx',
+            amount: 25000000, // 25M EUR estimated
+            currency: 'EUR',
+            description: 'Capital investments in clean technology and infrastructure',
+            timeframe: '2025-2030'
+          }
+        ]
+      },
+      scenarioAnalysis: {
+        scenarios: [
+          {
+            name: '1.5°C Scenario',
+            description: 'Rapid decarbonization aligned with Paris Agreement',
+            temperatureIncrease: 1.5,
+            assumptions: ['Carbon price reaches EUR 200/tonne by 2030', 'Renewable energy dominance', 'Phase-out of fossil fuels'],
+            impacts: [
+              {
+                category: 'Stranded Assets',
+                amount: -50000000,
+                currency: 'EUR',
+                description: 'Impairment of fossil fuel assets',
+                timeframe: '2025-2035'
+              }
+            ]
+          },
+          {
+            name: '3°C Scenario',
+            description: 'Current policies scenario with limited climate action',
+            temperatureIncrease: 3.0,
+            assumptions: ['Moderate carbon pricing', 'Gradual transition', 'Continued fossil fuel use'],
+            impacts: [
+              {
+                category: 'Physical Damage',
+                amount: -10000000,
+                currency: 'EUR',
+                description: 'Infrastructure damage from extreme weather',
+                timeframe: '2030-2050'
+              }
+            ]
+          }
+        ],
+        netZeroPathway: {
+          targetYear: 2050,
+          milestones: [
+            { year: 2030, emissionReduction: 50, description: '50% emission reduction vs 2025 baseline' },
+            { year: 2040, emissionReduction: 80, description: '80% emission reduction vs 2025 baseline' },
+            { year: 2050, emissionReduction: 100, description: 'Net zero emissions achieved' }
+          ],
+          investments: [
+            {
+              category: 'Clean Technology',
+              amount: 100000000,
+              currency: 'EUR',
+              description: 'Total investment in clean technology and infrastructure',
+              timeframe: '2025-2050'
+            }
+          ]
+        }
+      }
+    };
+  }
+
+  private static generateDataActCompliance(): DataActCompliance {
+    return {
+      dataInteroperability: {
+        formats: ['JSON', 'CSV', 'XML', 'ESEF'],
+        standards: ['ISO 14064', 'GRI Standards', 'TCFD', 'SASB'],
+        apiEndpoints: ['/api/emissions', '/api/compliance', '/api/reports']
+      },
+      dataPortability: {
+        exportFormats: ['JSON', 'CSV', 'XML', 'PDF'],
+        transferMechanisms: ['API', 'Secure File Transfer', 'Data Portal'],
+        retentionPeriod: 7 // years
+      },
+      accessControls: {
+        roles: [
+          {
+            role: 'regulator',
+            permissions: ['read', 'export'],
+            dataScope: ['emissions', 'compliance', 'verification']
+          },
+          {
+            role: 'internal',
+            permissions: ['read', 'write', 'export'],
+            dataScope: ['all']
+          },
+          {
+            role: 'partner',
+            permissions: ['read'],
+            dataScope: ['aggregated_data']
+          },
+          {
+            role: 'public',
+            permissions: ['read'],
+            dataScope: ['summary_data']
+          }
+        ],
+        permissions: [
+          { action: 'read', resource: 'emissions_data' },
+          { action: 'export', resource: 'compliance_reports', conditions: ['authenticated', 'authorized'] },
+          { action: 'share', resource: 'aggregated_metrics', conditions: ['data_minimization'] }
+        ]
+      },
+      auditLogging: {
+        enabled: true,
+        retentionPeriod: 10, // years
+        loggedEvents: ['data_access', 'data_export', 'data_sharing', 'report_generation', 'user_authentication']
+      }
+    };
+  }
+
+  private static generateReport(data: EnhancedComplianceReportData): ComplianceReport {
     const sections: ReportSection[] = [
       this.generateCSRDSection(data),
       this.generateESRSSection(data),
@@ -98,13 +322,23 @@ export class ComplianceReportService {
       this.generateClimateMonitoringSection(data)
     ];
 
+    // Add SEC section if SEC disclosure is present
+    if (data.secDisclosure) {
+      sections.push(this.generateSECSection(data));
+    }
+
+    // Add Data Act section
+    sections.push(this.generateDataActSection(data));
+
     return {
-      title: 'EU Emission Reporting Standards (2025)',
+      title: data.secDisclosure ? 'Multi-Jurisdictional Emission Reporting Standards (2025)' : 'EU Emission Reporting Standards (2025)',
       executiveSummary: this.generateExecutiveSummary(data),
       sections,
       conclusion: this.generateConclusion(data),
       generatedAt: new Date().toISOString(),
-      reportingEntity: 'European Power Generation Consortium'
+      reportingEntity: 'European Power Generation Consortium',
+      jurisdiction: data.secDisclosure ? 'COMBINED' : 'EU',
+      framework: data.complianceMapping.eu.concat(data.secDisclosure ? data.complianceMapping.us : [])
     };
   }
 
@@ -212,9 +446,67 @@ export class ComplianceReportService {
     };
   }
 
+  private static generateSECSection(data: EnhancedComplianceReportData): ReportSection {
+    const sec = data.secDisclosure!;
+    
+    return {
+      title: '5. US SEC Climate-Related Disclosures',
+      content: 'Assessment of compliance with SEC Climate-Related Disclosure Rules (2024).',
+      subsections: [
+        {
+          title: 'Scope & Applicability',
+          content: `The SEC Climate-Related Disclosure Rules apply to public companies required to file annual reports. Our reporting entity qualifies as a large accelerated filer, requiring comprehensive climate-related disclosures including GHG emissions, climate risks, and financial impacts. Scope 1 emissions: ${sec.ghgEmissions.scope1.toFixed(0)} tCO₂e, Scope 2 emissions: ${sec.ghgEmissions.scope2.toFixed(0)} tCO₂e.`
+        },
+        {
+          title: 'Requirements',
+          content: `SEC rules mandate disclosure of material climate-related risks, GHG emissions (Scope 1 and 2, and material Scope 3), and quantified financial impacts. Physical risks include extreme weather events with high impact potential. Transition risks encompass policy changes with estimated compliance costs of EUR ${sec.financialImpacts.costs[0]?.amount.toLocaleString()} annually. Scenario analysis covers 1.5°C and 3°C pathways with net zero target by ${sec.scenarioAnalysis.netZeroPathway.targetYear}.`
+        },
+        {
+          title: 'Legal Basis',
+          content: 'SEC Final Rule on "The Enhancement and Standardization of Climate-Related Disclosures for Investors" (Release Nos. 33-11275; 34-99678), effective for large accelerated filers beginning with fiscal year 2025.'
+        },
+        {
+          title: 'Implications in Practice',
+          content: `Requires annual 10-K disclosure of climate risks, quarterly 8-K reporting of material climate events, and third-party attestation of Scope 1 and 2 emissions. Financial statement impacts must be disclosed when material. Transition investments of EUR ${sec.financialImpacts.capitalExpenditures[0]?.amount.toLocaleString()} planned over 2025-2030 period. Safe harbor provisions apply to forward-looking statements in scenario analysis.`
+        }
+      ]
+    };
+  }
+
+  private static generateDataActSection(data: EnhancedComplianceReportData): ReportSection {
+    const dataAct = data.dataActCompliance;
+    
+    return {
+      title: '6. EU Data Act Compliance',
+      content: 'Implementation of data interoperability, portability, and access control requirements under EU Data Act.',
+      subsections: [
+        {
+          title: 'Scope & Applicability',
+          content: `The EU Data Act (Regulation 2023/2854) applies to data holders and users in the EU, establishing rights for data access and portability. Our reporting system qualifies as a data holder for emissions and compliance data, subject to data sharing obligations with authorized parties including regulators, business users, and third parties under specific conditions.`
+        },
+        {
+          title: 'Requirements',
+          content: `Data Act mandates interoperability through standardized formats (${dataAct.dataInteroperability.formats.join(', ')}), data portability with ${dataAct.dataPortability.retentionPeriod}-year retention, and role-based access controls for ${dataAct.accessControls.roles.length} user categories. Audit logging enabled for ${dataAct.auditLogging.loggedEvents.length} event types with ${dataAct.auditLogging.retentionPeriod}-year retention. API endpoints available for automated data access and sharing.`
+        },
+        {
+          title: 'Legal Basis',
+          content: 'Regulation (EU) 2023/2854 of the European Parliament and of the Council on harmonised rules on fair access to and use of data (Data Act), applicable from September 2025.'
+        },
+        {
+          title: 'Implications in Practice',
+          content: `Requires technical implementation of data portability mechanisms, standardized APIs for data sharing, and comprehensive access control systems. Data minimization principles apply to all sharing activities. Regulatory authorities have enhanced access rights to emissions and compliance data. Business users can request data portability with 30-day response time. Audit trails maintain compliance evidence for regulatory inspections.`
+        }
+      ]
+    };
+  }
+
   private static generateConclusion(data: ComplianceReportData): string {
     const complianceRate = (data.facilities.filter(f => f.complianceStatus === 'compliant').length / data.facilities.length) * 100;
-    return `This assessment confirms ${complianceRate}% facility-level compliance with applicable EU emission reporting standards for the ${data.reportingPeriod.year} reporting period. All mandatory reporting deadlines have been met, verification procedures completed, and allowance surrender obligations fulfilled. Continued monitoring and reporting under evolving EU climate legislation remains essential for maintaining regulatory compliance and supporting EU climate neutrality objectives by 2050.`;
+    const enhanced = data as EnhancedComplianceReportData;
+    const frameworks = enhanced.secDisclosure ? 'EU and US emission reporting standards' : 'EU emission reporting standards';
+    const additional = enhanced.secDisclosure ? ' US SEC climate disclosure requirements have been addressed with comprehensive risk assessment and financial impact quantification.' : '';
+    
+    return `This assessment confirms ${complianceRate}% facility-level compliance with applicable ${frameworks} for the ${data.reportingPeriod.year} reporting period. All mandatory reporting deadlines have been met, verification procedures completed, and allowance surrender obligations fulfilled.${additional} EU Data Act compliance ensures data interoperability and access rights are properly implemented. Continued monitoring and reporting under evolving climate legislation remains essential for maintaining regulatory compliance and supporting climate neutrality objectives.`;
   }
 
   private static getPlantLocation(plantId: number): string {
@@ -236,5 +528,68 @@ export class ComplianceReportService {
     const totalOutput = data.reduce((sum, d) => sum + d.electricity_output_MWh, 0);
     const chpOutput = data.filter(d => d.plant_name.includes('CHP')).reduce((sum, d) => sum + d.electricity_output_MWh, 0);
     return Math.round((chpOutput / totalOutput) * 100 * 100) / 100; // Round to 2 decimals
+  }
+
+  // Export data in various formats for Data Act compliance
+  static async exportData(format: 'JSON' | 'CSV' | 'XML', userRole: string): Promise<string> {
+    try {
+      const response = await fetch('/sample_data.csv');
+      const csvText = await response.text();
+      const parsedData = parseCSVData(csvText);
+      const reportData = this.processDataForCompliance(parsedData, 'COMBINED');
+
+      // Apply role-based filtering
+      const filteredData = this.applyRoleBasedFiltering(reportData, userRole);
+
+      switch (format) {
+        case 'JSON':
+          return JSON.stringify(filteredData, null, 2);
+        case 'CSV':
+          return this.convertToCSV(filteredData);
+        case 'XML':
+          return this.convertToXML(filteredData);
+        default:
+          throw new Error('Unsupported format');
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      throw error;
+    }
+  }
+
+  private static applyRoleBasedFiltering(data: EnhancedComplianceReportData, role: string): any {
+    const roleConfig = data.dataActCompliance.accessControls.roles.find(r => r.role === role);
+    if (!roleConfig) {
+      throw new Error('Unauthorized role');
+    }
+
+    // Apply data scope filtering based on role
+    if (roleConfig.dataScope.includes('all')) {
+      return data;
+    }
+
+    // Return filtered data based on role permissions
+    const filtered: any = {
+      reportingPeriod: data.reportingPeriod,
+      aggregatedData: roleConfig.dataScope.includes('aggregated_data') ? data.aggregatedData : undefined,
+      facilities: roleConfig.dataScope.includes('emissions') ? data.facilities : undefined,
+    };
+
+    return filtered;
+  }
+
+  private static convertToCSV(data: any): string {
+    // Simple CSV conversion - in production, use a proper CSV library
+    const headers = Object.keys(data);
+    const values = Object.values(data).map(v => typeof v === 'object' ? JSON.stringify(v) : v);
+    return `${headers.join(',')}\n${values.join(',')}`;
+  }
+
+  private static convertToXML(data: any): string {
+    // Simple XML conversion - in production, use a proper XML library
+    const xmlString = Object.entries(data)
+      .map(([key, value]) => `<${key}>${typeof value === 'object' ? JSON.stringify(value) : value}</${key}>`)
+      .join('\n');
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<ComplianceData>\n${xmlString}\n</ComplianceData>`;
   }
 }
