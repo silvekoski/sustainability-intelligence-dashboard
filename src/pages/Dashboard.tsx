@@ -3,6 +3,7 @@ import { MetricCard } from '../components/MetricCard';
 import { PlantStatusCard } from '../components/PlantStatusCard';
 import { EmissionsChart } from '../components/EmissionsChart';
 import { EfficiencyGauge } from '../components/EfficiencyGauge';
+import { PermitsStatusWidget } from '../components/PermitsStatusWidget';
 import { useData } from '../hooks/useData';
 import { 
   Zap, 
@@ -45,8 +46,21 @@ export const Dashboard: React.FC = () => {
   const warningPlants = plantSummaries.filter(p => p.status === 'warning').length;
   const criticalPlants = plantSummaries.filter(p => p.status === 'critical').length;
 
+  // Sample permits data - in a real application, this would come from your backend
+  const permitsData = {
+    active_permits: 5,
+    avg_consumption_rate_t_per_month: 32000,
+    target_buffer_months: 12,
+    warning_threshold_pct: 80,
+    cumulative_emissions_t: metrics.totalEmissions
+  };
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
+      {/* Permits Status Widget */}
+      <div className="mb-8">
+        <PermitsStatusWidget input={permitsData} />
+      </div>
+
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <MetricCard
