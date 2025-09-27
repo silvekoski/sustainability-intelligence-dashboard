@@ -148,7 +148,7 @@ export class AuthService {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .maybeSingle();
+        .single();
 
       if (error) throw error;
       return { data, error: null };
