@@ -21,9 +21,10 @@ export const ProfileSettings: React.FC = () => {
 
   // Debug logging
   React.useEffect(() => {
-    console.log('ProfileSettings - User:', user);
-    console.log('ProfileSettings - Profile:', profile);
-    console.log('ProfileSettings - Current Organization:', currentOrganization);
+    console.log('[ProfileSettings] User:', user);
+    console.log('[ProfileSettings] Profile:', profile);
+    console.log('[ProfileSettings] Current Organization:', currentOrganization);
+    console.log('[ProfileSettings] Loading:', loading);
   }, [user, profile, currentOrganization]);
 
   const profileForm = useForm<UpdateProfileData>({
@@ -36,6 +37,7 @@ export const ProfileSettings: React.FC = () => {
 
   // Update form when profile data changes
   React.useEffect(() => {
+    console.log('[ProfileSettings] Profile data changed, updating form:', profile);
     if (profile) {
       profileForm.reset({
         full_name: profile.full_name || '',
@@ -49,9 +51,12 @@ export const ProfileSettings: React.FC = () => {
   });
 
   const handleRefreshData = async () => {
+    console.log('[ProfileSettings] Refreshing data...');
     setRefreshing(true);
     try {
       await refreshData();
+      // Also try to refresh auth data
+      window.location.reload();
     } catch (error) {
       console.error('Error refreshing data:', error);
     } finally {
@@ -60,14 +65,17 @@ export const ProfileSettings: React.FC = () => {
   };
 
   const onProfileSubmit = async (data: UpdateProfileData) => {
+    console.log('[ProfileSettings] Submitting profile update:', data);
     setProfileError(null);
     setProfileSuccess(false);
     
     const { error } = await updateProfile(data);
     
     if (error) {
+      console.error('[ProfileSettings] Profile update error:', error);
       setProfileError(error.message);
     } else {
+      console.log('[ProfileSettings] Profile update successful');
       setProfileSuccess(true);
       setTimeout(() => setProfileSuccess(false), 3000);
     }
@@ -107,6 +115,22 @@ export const ProfileSettings: React.FC = () => {
     { id: 'password', label: 'Password', icon: Lock },
     { id: 'danger', label: 'Danger Zone', icon: Trash2 },
   ];
+
+  // Show loading state if still initializing
+  if (!user && loading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-center py-12">
+            <div className="flex items-center space-x-3">
+              <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+              <span className="text-lg font-medium text-gray-700">Loading account...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -157,7 +181,7 @@ export const ProfileSettings: React.FC = () => {
             {activeTab === 'profile' && (
               <div className="space-y-6">
                 {/* Debug Information */}
-                {process.env.NODE_ENV === 'development' && (
+                {true && (
                   <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-xs">
                     <h4 className="font-semibold text-gray-900 mb-2">Debug Info:</h4>
                     <div className="space-y-1 text-gray-600">
@@ -166,6 +190,8 @@ export const ProfileSettings: React.FC = () => {
                       <div>Profile ID: {profile?.id || 'Not loaded'}</div>
                       <div>Profile Name: {profile?.full_name || 'Not loaded'}</div>
                       <div>Organization: {currentOrganization?.name || 'Not loaded'}</div>
+                      <div>Loading State: {loading ? 'true' : 'false'}</div>
+                      <div>Profile Object: {JSON.stringify(profile, null, 2)}</div>
                     </div>
                   </div>
                 )}
@@ -198,7 +224,7 @@ export const ProfileSettings: React.FC = () => {
                         </div>
                         <input
                           type="email"
-                          value={user?.email || 'Loading...'}
+                          value={user?.email || (loading ? 'Loading...' : 'No email found')}
                           disabled
                           className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
                         />
@@ -216,7 +242,7 @@ export const ProfileSettings: React.FC = () => {
                         className={`block w-full px-3 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${
                           profileForm.formState.errors.full_name ? 'border-red-300' : 'border-gray-300'
                         }`}
-                        placeholder={profile ? "Enter your full name" : "Loading..."}
+                        placeholder={loading ? "Loading..." : "Enter your full name"}
                       />
                       {profileForm.formState.errors.full_name && (
                         <p className="mt-1 text-sm text-red-600">
@@ -254,7 +280,7 @@ export const ProfileSettings: React.FC = () => {
                         </div>
                         <input
                           type="text"
-                          value={currentOrganization?.name || 'No organization'}
+                          value={currentOrganization?.name || (loading ? 'Loading...' : 'No organization')}
                           disabled
                           className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
                         />
@@ -276,7 +302,7 @@ export const ProfileSettings: React.FC = () => {
                         </div>
                         <input
                           type="text"
-                          value={profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : 'Loading...'}
+                          value={profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : (loading ? 'Loading...' : 'Date not available')}
                           disabled
                           className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
                         />
@@ -284,7 +310,7 @@ export const ProfileSettings: React.FC = () => {
                     </div>
 
                     {/* Show loading state if profile is not loaded */}
-                    {!profile && !loading && (
+                    {!profile && !loading && user && (
                       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                         <div className="flex items-center space-x-3">
                           <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
@@ -299,7 +325,7 @@ export const ProfileSettings: React.FC = () => {
 
                     <button
                       type="submit"
-                      disabled={profileForm.formState.isSubmitting || loading || !profile}
+                      disabled={profileForm.formState.isSubmitting || loading}
                       className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       {profileForm.formState.isSubmitting || loading ? (
