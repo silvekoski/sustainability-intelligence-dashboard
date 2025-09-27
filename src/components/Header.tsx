@@ -51,12 +51,6 @@ export const Header = () => {
               <Settings className="w-5 h-5" />
             </button>
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                <Activity className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-sm font-medium text-gray-700">Live Monitoring</span>
-            </div>
-          </div>
         </div>
       </div>
 
