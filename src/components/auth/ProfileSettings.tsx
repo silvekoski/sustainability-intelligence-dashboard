@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { User, Mail, Calendar, Loader2, AlertCircle, CheckCircle, Trash2, Lock } from 'lucide-react';
+import { User, Mail, Calendar, Loader2, AlertCircle, CheckCircle, Trash2, Lock, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { updatePasswordSchema } from '../../utils/validation';
 import { UpdateProfileData, UpdatePasswordCredentials } from '../../types/auth';
@@ -16,6 +17,7 @@ export const ProfileSettings: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const { user, updatePassword, deleteAccount, logout, loading } = useAuth();
+  const navigate = useNavigate();
 
   const profileForm = useForm<UpdateProfileData>({
     defaultValues: {
@@ -88,8 +90,19 @@ export const ProfileSettings: React.FC = () => {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-900">Account Settings</h1>
-          <p className="text-gray-600 mt-1">Manage your account preferences and security settings</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Account Settings</h1>
+              <p className="text-gray-600 mt-1">Manage your account preferences and security settings</p>
+            </div>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Close settings"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
         <div className="flex">
