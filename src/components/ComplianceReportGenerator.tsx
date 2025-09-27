@@ -108,20 +108,48 @@ export const ComplianceReportGenerator: React.FC<ComplianceReportGeneratorProps>
       const contentWidth = pageWidth - 2 * margin;
       let yPosition = margin;
 
-      // Add logo (if available)
+      // Add ESBoost logo
       try {
-        // Try to add logo - this will work if the logo is accessible
-        const logoImg = new Image();
-        logoImg.src = '/esboost-logo.svg';
-        // For now, we'll add a text-based logo since SVG handling in jsPDF can be complex
+        // Load and convert SVG to canvas, then to PDF
+        const response = await fetch('/esboost-logo.svg');
+        const svgText = await response.text();
+        
+        // Create a temporary canvas to render the SVG
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        // Convert SVG to data URL
+        const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(svgBlob);
+        
+        await new Promise((resolve, reject) => {
+          img.onload = () => {
+            canvas.width = 120; // Logo width
+            canvas.height = 40;  // Logo height
+            ctx?.drawImage(img, 0, 0, 120, 40);
+            
+            // Add logo to PDF
+            const imgData = canvas.toDataURL('image/png');
+            pdf.addImage(imgData, 'PNG', margin, yPosition, 30, 10);
+            
+            URL.revokeObjectURL(url);
+            resolve(true);
+          };
+          img.onerror = reject;
+          img.src = url;
+        });
+        
+        yPosition += 20;
+      } catch (error) {
+        console.warn('Could not load SVG logo, using text fallback:', error);
+        // Fallback to text logo
         pdf.setFontSize(16);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(34, 197, 94); // Green color
         pdf.text('ESBoost', margin, yPosition);
         pdf.setTextColor(0, 0, 0); // Reset to black
         yPosition += 15;
-      } catch (error) {
-        console.warn('Could not load logo:', error);
       }
 
       // Title
