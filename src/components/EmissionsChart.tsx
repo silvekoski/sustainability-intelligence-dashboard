@@ -36,10 +36,10 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
     return { ...item, change, changePercent };
   });
 
-  // Enhanced scaling - use a more dynamic range
+  // Subtle scaling improvement - add small padding for better visibility
   const valueRange = maxValue - minValue;
-  const scaledMin = Math.max(0, minValue - (valueRange * 0.1)); // Add 10% padding below
-  const scaledMax = maxValue + (valueRange * 0.1); // Add 10% padding above
+  const scaledMin = Math.max(0, minValue - (valueRange * 0.05)); // Add 5% padding below
+  const scaledMax = maxValue + (valueRange * 0.05); // Add 5% padding above
   const effectiveRange = scaledMax - scaledMin;
 
   // Enhanced color scheme
@@ -101,7 +101,7 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
         </div>
       </div>
       
-      {/* Enhanced Legend */}
+      {/* Legend */}
       <div className="flex items-center justify-between mb-6 p-4 bg-gray-50 rounded-lg">
         <div className="flex items-center space-x-6">
           <div className="flex items-center space-x-2">
@@ -156,9 +156,9 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
         </div>
         
         {/* Chart bars */}
-        <div className="h-80 flex items-end justify-between space-x-2 relative z-20">
+        <div className="h-80 flex items-end justify-between space-x-3 relative z-20">
           {dayChanges.map((item, index) => {
-            // Use scaled values for better visual differentiation
+            // Use scaled values for subtle visual improvement
             const co2Height = ((item.CO2 - scaledMin) / effectiveRange) * 100;
             const ch4Height = ((item.CH4 - scaledMin) / effectiveRange) * 100;
             const n2oHeight = ((item.N2O - scaledMin) / effectiveRange) * 100;
@@ -220,53 +220,32 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
                     </div>
                   </div>
 
-                  {/* Day change indicator */}
-                  {index > 0 && (
-                    <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      <div className={`text-xs font-bold px-2 py-1 rounded ${
-                        item.change >= 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-                      }`}>
-                        {item.change >= 0 ? '+' : ''}{item.change.toFixed(0)}t
-                      </div>
-                    </div>
-                  )}
-
                   {/* CO2 bar */}
                   <div 
-                    className="w-full rounded-t-sm transition-all duration-300 group-hover:brightness-110 shadow-sm border-r border-white"
+                    className="w-full rounded-t-sm transition-all duration-300 group-hover:brightness-110"
                     style={{ 
                       height: `${co2Height}%`,
-                      backgroundColor: colors.CO2.primary,
-                      boxShadow: `inset 0 1px 0 ${colors.CO2.light}`
+                      backgroundColor: colors.CO2.primary
                     }}
                   />
                   
                   {/* CH4 bar */}
                   <div 
-                    className="w-full transition-all duration-300 group-hover:brightness-110 shadow-sm border-r border-white"
+                    className="w-full transition-all duration-300 group-hover:brightness-110"
                     style={{ 
                       height: `${ch4Height}%`,
-                      backgroundColor: colors.CH4.primary,
-                      boxShadow: `inset 0 1px 0 ${colors.CH4.light}`
+                      backgroundColor: colors.CH4.primary
                     }}
                   />
                   
                   {/* N2O bar */}
                   <div 
-                    className="w-full rounded-b-sm transition-all duration-300 group-hover:brightness-110 shadow-sm border-r border-white"
+                    className="w-full rounded-b-sm transition-all duration-300 group-hover:brightness-110"
                     style={{ 
                       height: `${n2oHeight}%`,
-                      backgroundColor: colors.N2O.primary,
-                      boxShadow: `inset 0 1px 0 ${colors.N2O.light}`
+                      backgroundColor: colors.N2O.primary
                     }}
                   />
-
-                  {/* Total value label on hover */}
-                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <span className="text-xs font-semibold text-gray-700 bg-white px-2 py-1 rounded shadow-sm border">
-                      {item.total.toFixed(0)}t
-                    </span>
-                  </div>
                 </div>
                 
                 {/* Date label */}
@@ -281,7 +260,7 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
                     <p className={`text-xs font-bold mt-1 ${
                       item.change >= 0 ? 'text-red-600' : 'text-green-600'
                     }`}>
-                      {item.change >= 0 ? '↗' : '↘'} {Math.abs(item.changePercent).toFixed(1)}%
+                      {item.change >= 0 ? '+' : ''}{item.changePercent.toFixed(1)}%
                     </p>
                   )}
                 </div>
@@ -291,7 +270,7 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
         </div>
       </div>
       
-      {/* Enhanced Summary Statistics */}
+      {/* Summary Statistics */}
       <div className="mt-6 pt-6 border-t border-gray-200">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center p-4 rounded-lg" style={{ backgroundColor: colors.CO2.bg }}>
