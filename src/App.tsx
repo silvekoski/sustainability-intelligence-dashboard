@@ -18,19 +18,13 @@ function App() {
           {/* Public routes */}
           <Route path="/auth" element={<AuthLayout />}>
             <Route path="login" element={
-              <ProtectedRoute requireAuth={false}>
-                <LoginForm />
-              </ProtectedRoute>
+              <LoginForm />
             } />
             <Route path="register" element={
-              <ProtectedRoute requireAuth={false}>
-                <RegisterForm />
-              </ProtectedRoute>
+              <RegisterForm />
             } />
             <Route path="forgot-password" element={
-              <ProtectedRoute requireAuth={false}>
-                <ForgotPasswordForm />
-              </ProtectedRoute>
+              <ForgotPasswordForm />
             } />
           </Route>
 
@@ -39,9 +33,12 @@ function App() {
           <Route path="/register" element={<Navigate to="/auth/register" replace />} />
           <Route path="/forgot-password" element={<Navigate to="/auth/forgot-password" replace />} />
 
+
           {/* Protected routes */}
           <Route path="/" element={
-            <DashboardLayout />
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
           }>
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />

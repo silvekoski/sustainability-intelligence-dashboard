@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { loginSchema } from '../../utils/validation';
@@ -10,7 +10,7 @@ import { LoginCredentials } from '../../types/auth';
 export const LoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const { login, loading } = useAuth();
+  const { login, loading, user } = useAuth();
 
   const {
     register,
@@ -23,19 +23,23 @@ export const LoginForm: React.FC = () => {
   const onSubmit = async (data: LoginCredentials) => {
     setAuthError(null);
     const { error } = await login(data.email, data.password);
-    
+
     if (error) {
       setAuthError(error.message);
     }
   };
 
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <img 
-            src="/esboost-logo.svg" 
-            alt="ESBoost" 
+          <img
+            src="/esboost-logo.svg"
+            alt="ESBoost"
             className="mx-auto h-12 w-auto"
           />
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
@@ -73,9 +77,8 @@ export const LoginForm: React.FC = () => {
                   {...register('email')}
                   type="email"
                   autoComplete="email"
-                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${
-                    errors.email ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${errors.email ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   placeholder="Enter your email"
                 />
               </div>
@@ -96,9 +99,8 @@ export const LoginForm: React.FC = () => {
                   {...register('password')}
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
-                  className={`block w-full pl-10 pr-10 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${
-                    errors.password ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  className={`block w-full pl-10 pr-10 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${errors.password ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   placeholder="Enter your password"
                 />
                 <button

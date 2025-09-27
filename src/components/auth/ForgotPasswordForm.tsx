@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { Mail, Loader2, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { resetPasswordSchema } from '../../utils/validation';
@@ -10,7 +10,7 @@ import { ResetPasswordCredentials } from '../../types/auth';
 export const ForgotPasswordForm: React.FC = () => {
   const [authError, setAuthError] = useState<string | null>(null);
   const [resetSent, setResetSent] = useState(false);
-  const { resetPassword } = useAuth();
+  const { resetPassword, user } = useAuth();
 
   const {
     register,
@@ -31,6 +31,10 @@ export const ForgotPasswordForm: React.FC = () => {
       setResetSent(true);
     }
   };
+
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   if (resetSent) {
     return (

@@ -1,9 +1,10 @@
 import { User } from '@supabase/supabase-js';
 
 export interface AuthUser extends User {
-  user_metadata?: {
+  user_metadata: {
     full_name?: string;
     avatar_url?: string;
+    [key: string]: any;
   };
 }
 
@@ -18,7 +19,6 @@ export interface UserProfile {
 
 export interface AuthState {
   user: AuthUser | null;
-  profile: UserProfile | null;
   loading: boolean;
   initialized: boolean;
 }

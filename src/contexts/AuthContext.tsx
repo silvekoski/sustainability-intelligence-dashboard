@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { AuthState, AuthUser, UserProfile } from '../types/auth';
+import { AuthState, AuthUser } from '../types/auth';
 import { AuthService } from '../services/authService';
 import { supabase } from '../lib/supabase';
 
@@ -9,7 +9,6 @@ interface AuthContextType extends AuthState {
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
   updatePassword: (currentPassword: string, newPassword: string, confirmPassword: string) => Promise<{ error: any }>;
-  updateProfile: (data: { full_name: string; avatar_url?: string }) => Promise<{ error: any }>;
   deleteAccount: () => Promise<{ error: any }>;
   resendConfirmation: (email: string) => Promise<{ error: any }>;
 }
@@ -31,7 +30,6 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [state, setState] = useState<AuthState>({
     user: null,
-    profile: null,
     loading: true,
     initialized: false,
   });
@@ -43,27 +41,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         // Get initial session
         const { data: { session } } = await supabase.auth.getSession();
-        
+
         if (!mounted) return;
 
         if (session?.user) {
           // User is authenticated, try to fetch profile
-          let profile = null;
-          try {
-            const { data } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-            profile = data;
-          } catch (error) {
-            console.warn('Profile fetch failed:', error);
-          }
-
           if (mounted) {
             setState({
               user: session.user as AuthUser,
-              profile,
               loading: false,
               initialized: true,
             });
@@ -73,7 +58,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
           if (mounted) {
             setState({
               user: null,
-              profile: null,
               loading: false,
               initialized: true,
             });
@@ -84,7 +68,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (mounted) {
           setState({
             user: null,
-            profile: null,
             loading: false,
             initialized: true,
           });
@@ -104,42 +87,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
           setState(prev => ({ ...prev, loading: true }));
-          
-          // Fetch user profile
-          let profile = null;
-          try {
-            const { data } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-            profile = data;
-          } catch (error: any) {
-            console.warn('Profile fetch failed, creating profile:', error);
-            // If profile doesn't exist, create it
-            if (error?.code === 'PGRST116') {
-              try {
-                const { data: newProfile } = await supabase
-                  .from('profiles')
-                  .insert({
-                    id: session.user.id,
-                    email: session.user.email || '',
-                    full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '',
-                    avatar_url: session.user.user_metadata?.avatar_url || null,
-                  })
-                  .select()
-                  .single();
-                profile = newProfile;
-              } catch (insertError) {
-                console.error('Failed to create profile:', insertError);
-              }
-            }
-          }
-
           if (mounted) {
             setState({
               user: session.user as AuthUser,
-              profile,
               loading: false,
               initialized: true,
             });
@@ -148,7 +98,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
           if (mounted) {
             setState({
               user: null,
-              profile: null,
               loading: false,
               initialized: true,
             });
@@ -187,15 +136,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = async (email: string, password: string) => {
     setState(prev => ({ ...prev, loading: true }));
-    
+
     try {
       const result = await AuthService.login({ email, password });
-      
+
       if (result.error) {
         setState(prev => ({ ...prev, loading: false }));
       }
       // Don't set loading to false here - let the auth state change handler do it
-      
+
       return { error: result.error };
     } catch (error) {
       setState(prev => ({ ...prev, loading: false }));
@@ -205,20 +154,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const register = async (email: string, password: string, confirmPassword: string, fullName: string) => {
     setState(prev => ({ ...prev, loading: true }));
-    
+
     try {
-      const result = await AuthService.register({ 
-        email, 
-        password, 
-        confirmPassword, 
-        fullName 
+      const result = await AuthService.register({
+        email,
+        password,
+        confirmPassword,
+        fullName
       });
-      
+
+
       if (result.error) {
         setState(prev => ({ ...prev, loading: false }));
       }
       // Don't set loading to false here - let the auth state change handler do it
-      
+
       return { error: result.error };
     } catch (error) {
       setState(prev => ({ ...prev, loading: false }));
@@ -228,14 +178,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = async () => {
     setState(prev => ({ ...prev, loading: true }));
-    
+
     try {
       await AuthService.logout();
     } catch (error) {
       console.error('Logout error:', error);
       setState({
         user: null,
-        profile: null,
         loading: false,
         initialized: true,
       });
@@ -264,48 +213,47 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const updateProfile = async (data: { full_name: string; avatar_url?: string }) => {
-    if (!state.user) return Promise.resolve({ error: { message: 'No user logged in' } });
-    
-    setState(prev => ({ ...prev, loading: true }));
-    
-    try {
-      const result = await AuthService.updateUserProfile(state.user.id, data);
+  /*   const updateProfile = async (data: { full_name: string; avatar_url?: string }) => {
+      if (!state.user) return Promise.resolve({ error: { message: 'No user logged in' } });
       
-      if (result.data) {
-        setState(prev => ({
-          ...prev,
-          profile: result.data,
-          loading: false,
-        }));
-      } else {
+      setState(prev => ({ ...prev, loading: true }));
+      
+      try {
+        const result = await AuthService.updateUserProfile(state.user.id, data);
+        
+        if (result.data) {
+          setState(prev => ({
+            ...prev,
+            profile: result.data,
+            loading: false,
+          }));
+        } else {
+          setState(prev => ({ ...prev, loading: false }));
+        }
+        
+        return { error: result.error };
+      } catch (error) {
         setState(prev => ({ ...prev, loading: false }));
+        return { error: { message: 'Profile update failed' } };
       }
-      
-      return { error: result.error };
-    } catch (error) {
-      setState(prev => ({ ...prev, loading: false }));
-      return { error: { message: 'Profile update failed' } };
-    }
-  };
+    }; */
 
   const deleteAccount = async () => {
     setState(prev => ({ ...prev, loading: true }));
-    
+
     try {
       const result = await AuthService.deleteAccount();
-      
+
       if (!result.error) {
         setState({
           user: null,
-          profile: null,
           loading: false,
           initialized: true,
         });
       } else {
         setState(prev => ({ ...prev, loading: false }));
       }
-      
+
       return { error: result.error };
     } catch (error) {
       setState(prev => ({ ...prev, loading: false }));
@@ -329,7 +277,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     logout,
     resetPassword,
     updatePassword,
-    updateProfile,
     deleteAccount,
     resendConfirmation,
   };

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { registerSchema } from '../../utils/validation';
@@ -11,7 +11,7 @@ export const RegisterForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const { register: registerUser, loading } = useAuth();
+  const { register: registerUser, loading, user } = useAuth();
   const navigate = useNavigate();
 
   const {
@@ -27,7 +27,7 @@ export const RegisterForm: React.FC = () => {
 
   const getPasswordStrength = (password: string) => {
     if (!password) return { strength: 0, label: '', color: '' };
-    
+
     let strength = 0;
     if (password.length >= 8) strength++;
     if (/[a-z]/.test(password)) strength++;
@@ -37,7 +37,7 @@ export const RegisterForm: React.FC = () => {
 
     const labels = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
     const colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-blue-500', 'bg-green-500'];
-    
+
     return {
       strength,
       label: labels[strength - 1] || '',
@@ -55,7 +55,7 @@ export const RegisterForm: React.FC = () => {
       data.confirmPassword,
       data.fullName
     );
-    
+
     if (error) {
       setAuthError(error.message);
     } else {
@@ -64,13 +64,17 @@ export const RegisterForm: React.FC = () => {
     }
   };
 
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <img 
-            src="/esboost-logo.svg" 
-            alt="ESBoost" 
+          <img
+            src="/esboost-logo.svg"
+            alt="ESBoost"
             className="mx-auto h-12 w-auto"
           />
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
@@ -108,9 +112,8 @@ export const RegisterForm: React.FC = () => {
                   {...register('fullName')}
                   type="text"
                   autoComplete="name"
-                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${
-                    errors.fullName ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${errors.fullName ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   placeholder="Enter your full name"
                 />
               </div>
@@ -131,9 +134,8 @@ export const RegisterForm: React.FC = () => {
                   {...register('email')}
                   type="email"
                   autoComplete="email"
-                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${
-                    errors.email ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${errors.email ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   placeholder="Enter your email"
                 />
               </div>
@@ -154,9 +156,8 @@ export const RegisterForm: React.FC = () => {
                   {...register('password')}
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="new-password"
-                  className={`block w-full pl-10 pr-10 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${
-                    errors.password ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  className={`block w-full pl-10 pr-10 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${errors.password ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   placeholder="Create a password"
                 />
                 <button
@@ -201,9 +202,8 @@ export const RegisterForm: React.FC = () => {
                   {...register('confirmPassword')}
                   type={showConfirmPassword ? 'text' : 'password'}
                   autoComplete="new-password"
-                  className={`block w-full pl-10 pr-10 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${
-                    errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  className={`block w-full pl-10 pr-10 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   placeholder="Confirm your password"
                 />
                 <button

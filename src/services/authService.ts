@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase';
-import { 
-  LoginCredentials, 
-  RegisterCredentials, 
+import {
+  LoginCredentials,
+  RegisterCredentials,
   ResetPasswordCredentials,
   UpdatePasswordCredentials,
   UpdateProfileData,
@@ -13,6 +13,11 @@ export class AuthService {
   // Register new user
   static async register(credentials: RegisterCredentials) {
     try {
+      // Validate password confirmation
+      if (credentials.password !== credentials.confirmPassword) {
+        throw new Error('Passwords do not match');
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: credentials.email,
         password: credentials.password,
@@ -25,19 +30,7 @@ export class AuthService {
 
       if (error) throw error;
 
-      // Create user profile
-      if (data.user) {
-        try {
-          await this.createUserProfile(data.user.id, {
-            email: credentials.email,
-            full_name: credentials.fullName,
-          });
-        } catch (profileError) {
-          console.error('Profile creation error:', profileError);
-          // Don't fail registration if profile creation fails
-        }
-      }
-
+      // Profile is automatically created by database trigger
       return { data, error: null };
     } catch (error: any) {
       return { data: null, error: this.formatError(error) };
@@ -51,6 +44,8 @@ export class AuthService {
         email: credentials.email,
         password: credentials.password,
       });
+
+      console.log(data);
 
       if (error) throw error;
       return { data, error: null };
@@ -123,75 +118,6 @@ export class AuthService {
     }
   }
 
-  // Create user profile
-  static async createUserProfile(userId: string, profileData: Partial<UserProfile>) {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .upsert({
-          id: userId,
-          ...profileData,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return { data, error: null };
-    } catch (error: any) {
-      return { data: null, error: this.formatError(error) };
-    }
-  }
-
-  // Get user profile
-  static async getUserProfile(userId: string) {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (error) {
-        throw error;
-      }
-      
-      return { data, error: null };
-    } catch (error: any) {
-      return { data: null, error: this.formatError(error) };
-    }
-  }
-
-  // Update user profile
-  static async updateUserProfile(userId: string, profileData: UpdateProfileData) {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({
-          ...profileData,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', userId)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Also update auth user metadata
-      await supabase.auth.updateUser({
-        data: {
-          full_name: profileData.full_name,
-          avatar_url: profileData.avatar_url,
-        }
-      });
-
-      return { data, error: null };
-    } catch (error: any) {
-      return { data: null, error: this.formatError(error) };
-    }
-  }
-
   // Delete user account
   static async deleteAccount() {
     try {
@@ -206,7 +132,7 @@ export class AuthService {
 
       // Note: Supabase doesn't allow deleting users from client-side
       // This would need to be handled by an admin function or RLS policy
-      
+
       return { error: null };
     } catch (error: any) {
       return { error: this.formatError(error) };
@@ -243,6 +169,9 @@ export class AuthService {
       }
       if (error.message.includes('Password should be at least')) {
         return { message: 'Password must be at least 6 characters long' };
+      }
+      if (error.message.includes('Passwords do not match')) {
+        return { message: 'Passwords do not match' };
       }
       return { message: error.message };
     }

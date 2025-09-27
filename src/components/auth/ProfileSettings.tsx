@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { User, Mail, Calendar, Loader2, AlertCircle, CheckCircle, Trash2, Lock } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { profileSchema, updatePasswordSchema } from '../../utils/validation';
+import { updatePasswordSchema } from '../../utils/validation';
 import { UpdateProfileData, UpdatePasswordCredentials } from '../../types/auth';
 
 export const ProfileSettings: React.FC = () => {
@@ -13,14 +13,13 @@ export const ProfileSettings: React.FC = () => {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  
-  const { user, profile, updateProfile, updatePassword, deleteAccount, logout, loading } = useAuth();
+
+  const { user, updatePassword, deleteAccount, logout, loading } = useAuth();
 
   const profileForm = useForm<UpdateProfileData>({
-    resolver: yupResolver(profileSchema),
     defaultValues: {
-      full_name: profile?.full_name || '',
-      avatar_url: profile?.avatar_url || '',
+      full_name: user?.user_metadata?.full_name || '',
+      avatar_url: user?.user_metadata?.avatar_url || '',
     },
   });
 
@@ -31,27 +30,27 @@ export const ProfileSettings: React.FC = () => {
   const onProfileSubmit = async (data: UpdateProfileData) => {
     setProfileError(null);
     setProfileSuccess(false);
-    
+/* 
     const { error } = await updateProfile(data);
-    
+
     if (error) {
       setProfileError(error.message);
     } else {
       setProfileSuccess(true);
       setTimeout(() => setProfileSuccess(false), 3000);
-    }
+    } */
   };
 
   const onPasswordSubmit = async (data: UpdatePasswordCredentials) => {
     setPasswordError(null);
     setPasswordSuccess(false);
-    
+
     const { error } = await updatePassword(
       data.currentPassword,
       data.newPassword,
       data.confirmPassword
     );
-    
+
     if (error) {
       setPasswordError(error.message);
     } else {
@@ -63,7 +62,7 @@ export const ProfileSettings: React.FC = () => {
 
   const handleDeleteAccount = async () => {
     const { error } = await deleteAccount();
-    
+
     if (error) {
       setProfileError(error.message);
     } else {
@@ -95,11 +94,10 @@ export const ProfileSettings: React.FC = () => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                      activeTab === tab.id
+                    className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${activeTab === tab.id
                         ? 'bg-green-100 text-green-700 border border-green-200'
                         : 'text-gray-600 hover:bg-gray-100'
-                    }`}
+                      }`}
                   >
                     <Icon className="w-5 h-5" />
                     <span className="font-medium">{tab.label}</span>
@@ -115,7 +113,7 @@ export const ProfileSettings: React.FC = () => {
               <div className="space-y-6">
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900 mb-4">Profile Information</h2>
-                  
+
                   {profileSuccess && (
                     <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-4 flex items-center space-x-3">
                       <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
@@ -156,9 +154,8 @@ export const ProfileSettings: React.FC = () => {
                       <input
                         {...profileForm.register('full_name')}
                         type="text"
-                        className={`block w-full px-3 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${
-                          profileForm.formState.errors.full_name ? 'border-red-300' : 'border-gray-300'
-                        }`}
+                        className={`block w-full px-3 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${profileForm.formState.errors.full_name ? 'border-red-300' : 'border-gray-300'
+                          }`}
                         placeholder="Enter your full name"
                       />
                       {profileForm.formState.errors.full_name && (
@@ -175,9 +172,8 @@ export const ProfileSettings: React.FC = () => {
                       <input
                         {...profileForm.register('avatar_url')}
                         type="url"
-                        className={`block w-full px-3 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${
-                          profileForm.formState.errors.avatar_url ? 'border-red-300' : 'border-gray-300'
-                        }`}
+                        className={`block w-full px-3 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${profileForm.formState.errors.avatar_url ? 'border-red-300' : 'border-gray-300'
+                          }`}
                         placeholder="https://example.com/avatar.jpg"
                       />
                       {profileForm.formState.errors.avatar_url && (
@@ -197,7 +193,7 @@ export const ProfileSettings: React.FC = () => {
                         </div>
                         <input
                           type="text"
-                          value={profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : ''}
+                          value={user?.created_at ? new Date(user.created_at).toLocaleDateString() : ''}
                           disabled
                           className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
                         />
@@ -227,7 +223,7 @@ export const ProfileSettings: React.FC = () => {
               <div className="space-y-6">
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900 mb-4">Change Password</h2>
-                  
+
                   {passwordSuccess && (
                     <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-4 flex items-center space-x-3">
                       <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
@@ -250,9 +246,8 @@ export const ProfileSettings: React.FC = () => {
                       <input
                         {...passwordForm.register('currentPassword')}
                         type="password"
-                        className={`block w-full px-3 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${
-                          passwordForm.formState.errors.currentPassword ? 'border-red-300' : 'border-gray-300'
-                        }`}
+                        className={`block w-full px-3 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${passwordForm.formState.errors.currentPassword ? 'border-red-300' : 'border-gray-300'
+                          }`}
                         placeholder="Enter your current password"
                       />
                       {passwordForm.formState.errors.currentPassword && (
@@ -269,9 +264,8 @@ export const ProfileSettings: React.FC = () => {
                       <input
                         {...passwordForm.register('newPassword')}
                         type="password"
-                        className={`block w-full px-3 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${
-                          passwordForm.formState.errors.newPassword ? 'border-red-300' : 'border-gray-300'
-                        }`}
+                        className={`block w-full px-3 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${passwordForm.formState.errors.newPassword ? 'border-red-300' : 'border-gray-300'
+                          }`}
                         placeholder="Enter your new password"
                       />
                       {passwordForm.formState.errors.newPassword && (
@@ -288,9 +282,8 @@ export const ProfileSettings: React.FC = () => {
                       <input
                         {...passwordForm.register('confirmPassword')}
                         type="password"
-                        className={`block w-full px-3 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${
-                          passwordForm.formState.errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
-                        }`}
+                        className={`block w-full px-3 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${passwordForm.formState.errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+                          }`}
                         placeholder="Confirm your new password"
                       />
                       {passwordForm.formState.errors.confirmPassword && (
@@ -323,13 +316,13 @@ export const ProfileSettings: React.FC = () => {
               <div className="space-y-6">
                 <div>
                   <h2 className="text-lg font-semibold text-red-600 mb-4">Danger Zone</h2>
-                  
+
                   <div className="bg-red-50 border border-red-200 rounded-lg p-6">
                     <h3 className="text-lg font-medium text-red-900 mb-2">Delete Account</h3>
                     <p className="text-sm text-red-700 mb-4">
                       Once you delete your account, there is no going back. Please be certain.
                     </p>
-                    
+
                     {!showDeleteConfirm ? (
                       <button
                         onClick={() => setShowDeleteConfirm(true)}
