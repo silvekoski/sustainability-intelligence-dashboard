@@ -5,6 +5,7 @@ import { EmissionsChart } from '../components/EmissionsChart';
 import { EfficiencyGauge } from '../components/EfficiencyGauge';
 import { PermitsStatusWidget } from '../components/PermitsStatusWidget';
 import { FactoryComparisonBar } from '../components/FactoryComparisonBar';
+import { SatelliteHeatTracker } from '../components/SatelliteHeatTracker';
 import { useData } from '../hooks/useData';
 import { 
   Zap, 
@@ -88,6 +89,58 @@ export const Dashboard: React.FC = () => {
     }
   ];
 
+  // Sample satellite heat data - in a real application, this would come from satellite imagery processing
+  const satelliteHeatData = [
+    {
+      factory_name: "Alpha Power Station",
+      latitude: 52.5200,
+      longitude: 13.4050,
+      output_MWh: 2156,
+      thermal_value: 45.2,
+      baseline_temp: 18.5,
+      heat_index: 8.5,
+      efficiency_rank: 4,
+      status: 'red' as const,
+      status_emoji: '🔴'
+    },
+    {
+      factory_name: "Beta Energy Facility",
+      latitude: 48.8566,
+      longitude: 2.3522,
+      output_MWh: 1618,
+      thermal_value: 32.1,
+      baseline_temp: 16.8,
+      heat_index: 5.1,
+      efficiency_rank: 2,
+      status: 'yellow' as const,
+      status_emoji: '🟡'
+    },
+    {
+      factory_name: "Gamma CHP Plant",
+      latitude: 41.9028,
+      longitude: 12.4964,
+      output_MWh: 1079,
+      thermal_value: 25.3,
+      baseline_temp: 19.8,
+      heat_index: 2.7,
+      efficiency_rank: 1,
+      status: 'green' as const,
+      status_emoji: '🟢'
+    },
+    {
+      factory_name: "Delta Dual-Fuel Plant",
+      latitude: 55.7558,
+      longitude: 37.6176,
+      output_MWh: 1295,
+      thermal_value: 38.9,
+      baseline_temp: 12.4,
+      heat_index: 6.8,
+      efficiency_rank: 3,
+      status: 'yellow' as const,
+      status_emoji: '🟡'
+    }
+  ];
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
       {/* Permits Status Widget */}
@@ -98,6 +151,11 @@ export const Dashboard: React.FC = () => {
       {/* Factory Comparison Bar */}
       <div className="mb-8">
         <FactoryComparisonBar factories={factoryData} />
+      </div>
+
+      {/* Satellite Heat Tracker */}
+      <div className="mb-8">
+        <SatelliteHeatTracker factories={satelliteHeatData} />
       </div>
 
       {/* Key Metrics */}
