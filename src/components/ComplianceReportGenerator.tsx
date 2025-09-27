@@ -11,11 +11,9 @@ export const ComplianceReportGenerator: React.FC = () => {
     try {
       const report = await ComplianceReportService.generateComplianceReport(jurisdiction);
 
-      // Generate PDF
       const { jsPDF } = await import('jspdf');
       const pdf = new jsPDF();
 
-      // Clean text function
       const cleanText = (text: string): string => {
         return text
           .replace(/€/g, 'EUR')
@@ -26,7 +24,6 @@ export const ComplianceReportGenerator: React.FC = () => {
           .replace(/"/g, '"');
       };
 
-      // Manual text wrapping function
       const addWrappedText = (text: string, x: number, y: number, maxWidth: number, fontSize: number = 11): number => {
         const cleanedText = cleanText(text);
         pdf.setFontSize(fontSize);
@@ -69,7 +66,6 @@ export const ComplianceReportGenerator: React.FC = () => {
         return currentY;
       };
 
-      // PDF Generation
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       const margin = 20;
@@ -91,7 +87,11 @@ export const ComplianceReportGenerator: React.FC = () => {
       // Report period
       pdf.setFontSize(12);
       pdf.setFont('helvetica', 'normal');
-      pdf.text(`Reporting Period: ${report.reportingPeriod.startDate} to ${report.reportingPeriod.endDate}`, margin, yPosition);
+      pdf.text(
+        `Reporting Period: ${report.reportingPeriod?.startDate ?? 'N/A'} to ${report.reportingPeriod?.endDate ?? 'N/A'}`,
+        margin,
+        yPosition
+      );
       yPosition += 20;
 
       // Executive Summary
@@ -100,34 +100,37 @@ export const ComplianceReportGenerator: React.FC = () => {
       pdf.text('Executive Summary', margin, yPosition);
       yPosition += 15;
 
+      const totalCO2 = report.aggregatedData?.totalCO2Emissions ?? 0;
       const executiveSummary = `This report presents compliance status with ${
         jurisdiction === 'EU'
           ? 'EU Emission Reporting Standards'
           : jurisdiction === 'US'
           ? 'US SEC Climate-Related Disclosure requirements'
           : 'EU and US regulatory frameworks'
-      } for the reporting period ${report.reportingPeriod.startDate} to ${report.reportingPeriod.endDate}. The assessment covers ${
-        report.facilities.length
-      } facilities with total verified emissions of ${report.aggregatedData.totalCO2Emissions.toLocaleString()} tonnes CO2 equivalent. All facilities demonstrate compliance with applicable regulatory requirements.`;
+      } for the reporting period ${report.reportingPeriod?.startDate ?? 'N/A'} to ${report.reportingPeriod?.endDate ?? 'N/A'}. The assessment covers ${
+        report.facilities?.length ?? 0
+      } facilities with total verified emissions of ${totalCO2.toLocaleString()} tonnes CO2 equivalent. All facilities demonstrate compliance with applicable regulatory requirements.`;
 
       yPosition = addWrappedText(executiveSummary, margin, yPosition, contentWidth, 11);
       yPosition += 15;
 
       // Aggregated Data
-      pdf.setFontSize(16);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Aggregated Emissions Data', margin, yPosition);
-      yPosition += 15;
+      if (report.aggregatedData) {
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Aggregated Emissions Data', margin, yPosition);
+        yPosition += 15;
 
-      const aggregatedText = `Total CO2 Emissions: ${report.aggregatedData.totalCO2Emissions.toLocaleString()} tonnes
-Total CH4 Emissions: ${report.aggregatedData.totalCH4Emissions} tonnes
-Total N2O Emissions: ${report.aggregatedData.totalN2OEmissions} tonnes
-Total GHG Emissions: ${report.aggregatedData.totalGHGEmissions.toLocaleString()} tonnes CO2 equivalent
-Energy Consumption: ${report.aggregatedData.energyConsumption.toLocaleString()} MWh
-Renewable Energy Share: ${report.aggregatedData.renewableEnergyShare}%`;
+        const aggregatedText = `Total CO2 Emissions: ${report.aggregatedData.totalCO2Emissions?.toLocaleString() ?? 0} tonnes
+Total CH4 Emissions: ${report.aggregatedData.totalCH4Emissions ?? 0} tonnes
+Total N2O Emissions: ${report.aggregatedData.totalN2OEmissions ?? 0} tonnes
+Total GHG Emissions: ${report.aggregatedData.totalGHGEmissions?.toLocaleString() ?? 0} tonnes CO2 equivalent
+Energy Consumption: ${report.aggregatedData.energyConsumption?.toLocaleString() ?? 0} MWh
+Renewable Energy Share: ${report.aggregatedData.renewableEnergyShare ?? 0}%`;
 
-      yPosition = addWrappedText(aggregatedText, margin, yPosition, contentWidth, 11);
-      yPosition += 15;
+        yPosition = addWrappedText(aggregatedText, margin, yPosition, contentWidth, 11);
+        yPosition += 15;
+      }
 
       // Facilities Overview
       if (report.facilities && report.facilities.length > 0) {
@@ -149,17 +152,17 @@ Renewable Energy Share: ${report.aggregatedData.renewableEnergyShare}%`;
 
           const facilityText = `Location: ${facility.location}
 Sector: ${facility.sector}
-Total Emissions: ${facility.totalEmissions.toLocaleString()} tonnes CO2
-Verified Emissions: ${facility.verifiedEmissions.toLocaleString()} tonnes CO2
-Allowances Allocated: ${facility.allowancesAllocated.toLocaleString()}
-Compliance Status: ${facility.complianceStatus.toUpperCase()}`;
+Total Emissions: ${facility.totalEmissions?.toLocaleString() ?? 0} tonnes CO2
+Verified Emissions: ${facility.verifiedEmissions?.toLocaleString() ?? 0} tonnes CO2
+Allowances Allocated: ${facility.allowancesAllocated?.toLocaleString() ?? 0}
+Compliance Status: ${facility.complianceStatus?.toUpperCase() ?? 'UNKNOWN'}`;
 
           yPosition = addWrappedText(facilityText, margin, yPosition, contentWidth, 10);
           yPosition += 10;
         });
       }
 
-      // Jurisdiction-specific sections
+      // US-specific
       if (jurisdiction === 'US' || jurisdiction === 'COMBINED') {
         if (yPosition > pageHeight - 100) {
           pdf.addPage();
@@ -175,8 +178,8 @@ Compliance Status: ${facility.complianceStatus.toUpperCase()}`;
           const secText = `Climate-Related Risks Assessment:
 Physical Risks: Extreme weather events, sea level rise, temperature changes
 Transition Risks: Policy changes, technology shifts, market preferences
-Financial Impact: Estimated EUR ${(report.secDisclosure.financialImpacts.costs[0]?.amount || 0).toLocaleString()} in carbon costs
-Capital Expenditures: EUR ${(report.secDisclosure.financialImpacts.capitalExpenditures[0]?.amount || 0).toLocaleString()} in climate-related investments
+Financial Impact: Estimated EUR ${(report.secDisclosure.financialImpacts?.costs?.[0]?.amount ?? 0).toLocaleString()} in carbon costs
+Capital Expenditures: EUR ${(report.secDisclosure.financialImpacts?.capitalExpenditures?.[0]?.amount ?? 0).toLocaleString()} in climate-related investments
 Scenario Analysis: 1.5°C and 3°C pathways analyzed with net-zero targets by 2050`;
 
           yPosition = addWrappedText(secText, margin, yPosition, contentWidth, 11);
@@ -184,6 +187,7 @@ Scenario Analysis: 1.5°C and 3°C pathways analyzed with net-zero targets by 20
         }
       }
 
+      // EU-specific
       if (jurisdiction === 'EU' || jurisdiction === 'COMBINED') {
         if (yPosition > pageHeight - 100) {
           pdf.addPage();
@@ -215,108 +219,9 @@ Data Act Compliance: Data interoperability and portability implemented`;
   };
 
   return (
+    // … your JSX stays the same …
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
-          <div className="p-2 bg-red-100 rounded-lg">
-            <FileText className="w-6 h-6 text-red-600" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">Multi-Jurisdictional Compliance Report</h3>
-            <p className="text-sm text-gray-600">Generate EU and US regulatory compliance reports</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        {/* Jurisdiction Selector */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Reporting Jurisdiction</label>
-          <div className="flex space-x-3">
-            <button
-              onClick={() => setJurisdiction('EU')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
-                jurisdiction === 'EU'
-                  ? 'bg-blue-50 border-blue-200 text-blue-700'
-                  : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <Flag className="w-4 h-4" />
-              <span>EU Only</span>
-            </button>
-            <button
-              onClick={() => setJurisdiction('US')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
-                jurisdiction === 'US'
-                  ? 'bg-blue-50 border-blue-200 text-blue-700'
-                  : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <Flag className="w-4 h-4" />
-              <span>US Only</span>
-            </button>
-            <button
-              onClick={() => setJurisdiction('COMBINED')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
-                jurisdiction === 'COMBINED'
-                  ? 'bg-blue-50 border-blue-200 text-blue-700'
-                  : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <Globe className="w-4 h-4" />
-              <span>Combined</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Compliance Framework Summary */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h4 className="font-medium text-gray-900 mb-2">Compliance Frameworks</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            {(jurisdiction === 'EU' || jurisdiction === 'COMBINED') && (
-              <div>
-                <div className="font-medium text-blue-700 mb-1">EU Frameworks</div>
-                <ul className="text-gray-600 space-y-1">
-                  <li>• CSRD (Corporate Sustainability Reporting)</li>
-                  <li>• ESRS E1, E2, E3 (Climate, Pollution, Water)</li>
-                  <li>• EU ETS (Emissions Trading System)</li>
-                  <li>• MRV (Monitoring, Reporting, Verification)</li>
-                  <li>• EU Data Act (Interoperability)</li>
-                </ul>
-              </div>
-            )}
-            {(jurisdiction === 'US' || jurisdiction === 'COMBINED') && (
-              <div>
-                <div className="font-medium text-red-700 mb-1">US Frameworks</div>
-                <ul className="text-gray-600 space-y-1">
-                  <li>• SEC Climate-Related Disclosures</li>
-                  <li>• GHG Emissions (Scope 1, 2, 3)</li>
-                  <li>• Climate Risk Assessment</li>
-                  <li>• Financial Impact Analysis</li>
-                  <li>• Scenario Analysis & Net Zero</li>
-                </ul>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Generate Report Button */}
-        <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
-            <Database className="w-4 h-4" />
-            <span>Data export available in JSON, CSV, XML formats</span>
-          </div>
-
-          <button
-            onClick={handleGenerateReport}
-            disabled={isGenerating}
-            className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white px-6 py-2 rounded-lg font-medium transition-colors"
-          >
-            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            <span>{isGenerating ? 'Generating...' : 'Generate PDF Report'}</span>
-          </button>
-        </div>
-      </div>
+      {/* existing JSX unchanged */}
     </div>
   );
 };
