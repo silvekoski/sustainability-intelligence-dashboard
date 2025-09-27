@@ -20,7 +20,6 @@ export class AuthService {
           data: {
             full_name: credentials.fullName,
           },
-          emailRedirectTo: undefined, // Disable email confirmation
         }
       });
 
@@ -28,10 +27,15 @@ export class AuthService {
 
       // Create user profile
       if (data.user) {
-        await this.createUserProfile(data.user.id, {
-          email: credentials.email,
-          full_name: credentials.fullName,
-        });
+        try {
+          await this.createUserProfile(data.user.id, {
+            email: credentials.email,
+            full_name: credentials.fullName,
+          });
+        } catch (profileError) {
+          console.error('Profile creation error:', profileError);
+          // Don't fail registration if profile creation fails
+        }
       }
 
       return { data, error: null };
@@ -124,14 +128,12 @@ export class AuthService {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .insert([
-          {
-            id: userId,
-            ...profileData,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }
-        ])
+        .upsert({
+          id: userId,
+          ...profileData,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
         .select()
         .single();
 
@@ -151,10 +153,10 @@ export class AuthService {
         .eq('id', userId)
         .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        // PGRST116 is "not found" error, which is acceptable
+      if (error) {
         throw error;
       }
+      
       return { data, error: null };
     } catch (error: any) {
       return { data: null, error: this.formatError(error) };
