@@ -1,403 +1,131 @@
-import React, { useState } from 'react';
-import { FileText, Download, Loader2, CheckCircle, AlertCircle, FileDown, Globe, Database, Shield } from 'lucide-react';
-import { ComplianceReportService } from '../services/complianceReportService';
-import { ComplianceReport } from '../types/compliance';
-import jsPDF from 'jspdf';
+import { ComplianceReportData, ComplianceReport, ReportSection } from '../types/compliance';
+import { 
+  EnhancedComplianceReportData, 
+  SECClimateDisclosure, 
+  DataActCompliance,
+  ClimateRisk,
+  FinancialImpact,
+  ClimateScenario,
+  NetZeroPathway
+} from '../types/compliance';
+import { PowerPlantData } from '../types';
+import { parseCSVData, calculateAggregatedMetrics } from '../utils/dataParser';
 
-export const ComplianceReportGenerator: React.FC = () => {
-  const [report, setReport] = useState<ComplianceReport | null>(null);
-  const [jurisdiction, setJurisdiction] = useState<'EU' | 'US' | 'COMBINED'>('COMBINED');
-  const [loading, setLoading] = useState(false);
-  const [downloadingPdf, setDownloadingPdf] = useState(false);
-  const [exportingData, setExportingData] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const generateReport = async () => {
-    setLoading(true);
-    setError(null);
-    
+export class ComplianceReportService {
+  static async generateComplianceReport(jurisdiction: 'EU' | 'US' | 'COMBINED' = 'COMBINED'): Promise<ComplianceReport> {
     try {
-      const generatedReport = await ComplianceReportService.generateComplianceReport(jurisdiction);
-      setReport(generatedReport);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to generate report');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const downloadPDF = async () => {
-    if (!report) return;
-
-    setDownloadingPdf(true);
-    
-    try {
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 20;
-      const lineHeight = 6;
-      let yPosition = margin;
-
-      // Helper function to add text with word wrapping
-      const addText = (text: string, fontSize: number = 10, isBold: boolean = false, spacing: number = 3) => {
-        pdf.setFontSize(fontSize);
-        pdf.setFont('helvetica', isBold ? 'bold' : 'normal');
-        
-       // Clean text for PDF compatibility
-       const cleanText = text
-         .replace(/€/g, 'EUR')
-         .replace(/₂/g, '2')
-         .replace(/₄/g, '4')
-         .replace(/₂O/g, '2O')
-         .replace(/–/g, '-')
-         .replace(/'/g, "'")
-         .replace(/"/g, '"')
-         .replace(/"/g, '"')
-         .replace(/…/g, '...')
-         .trim();
-       
-        // Manual text wrapping to avoid jsPDF's character spacing issues
-        const maxWidth = pageWidth - 2 * margin;
-        
-        // Split text into paragraphs first
-       const paragraphs = cleanText.split('\n');
-        const allLines: string[] = [];
-        
-        paragraphs.forEach(paragraph => {
-          if (paragraph.trim() === '') {
-            allLines.push('');
-            return;
-          }
-          
-          // Manual word wrapping
-          const words = paragraph.split(' ');
-          let currentLine = '';
-          
-          words.forEach(word => {
-            const testLine = currentLine ? `${currentLine} ${word}` : word;
-            const testWidth = pdf.getTextWidth(testLine);
-            
-            if (testWidth <= maxWidth) {
-              currentLine = testLine;
-            } else {
-              if (currentLine) {
-                allLines.push(currentLine);
-                currentLine = word;
-              } else {
-                // Word is too long, force break
-                allLines.push(word);
-              }
-            }
-          });
-          
-          if (currentLine) {
-            allLines.push(currentLine);
-          }
-        });
-        
-        // Check if we need a new page
-        if (yPosition + (allLines.length * lineHeight) + spacing > pageHeight - margin) {
-          pdf.addPage();
-          yPosition = margin;
-        }
-        
-        // Add each line with proper spacing
-        allLines.forEach((line: string) => {
-          if (line.trim() !== '') {
-            pdf.text(line, margin, yPosition);
-          }
-          yPosition += lineHeight;
-        });
-        
-        yPosition += spacing; // Configurable spacing after sections
-      };
-
-      // Title
-      addText(report.title, 20, true, 8);
-
-      // Metadata
-      addText(`Generated: ${new Date(report.generatedAt).toLocaleDateString()}`, 10, false, 2);
-      addText(`Reporting Entity: ${report.reportingEntity}`, 10, false, 8);
-
-      // Executive Summary
-      addText('Executive Summary', 16, true, 4);
-      addText(report.executiveSummary, 11, false, 8);
-
-      // Sections
-      report.sections.forEach(section => {
-        addText(section.title, 14, true, 4);
-        addText(section.content, 11, false, 6);
-        
-        section.subsections.forEach(subsection => {
-          addText(subsection.title, 12, true, 3);
-          addText(subsection.content, 10, false, 5);
-        });
-        
-        yPosition += 6; // Extra space between major sections
-      });
-
-      // Conclusion
-      addText('Conclusion', 16, true, 4);
-      addText(report.conclusion, 11, false, 6);
-
-      // Save the PDF
-      const fileName = `EU_Emission_Report_${new Date().toISOString().split('T')[0]}.pdf`;
-      pdf.save(fileName);
+      // Load and process data
+      const response = await fetch('/sample_data.csv');
+      if (!response.ok) {
+        throw new Error('Failed to load CSV data');
+      }
       
+      const csvText = await response.text();
+      const parsedData = parseCSVData(csvText);
+      const reportData = this.processDataForCompliance(parsedData, jurisdiction);
+      
+      return this.generateReport(reportData);
     } catch (error) {
-      console.error('PDF generation error:', error);
-      setError('Failed to generate PDF report');
-    } finally {
-      setDownloadingPdf(false);
+      console.error('Error generating compliance report:', error);
+      throw error;
     }
-  };
+  }
 
-  const downloadMarkdown = () => {
-    if (!report) return;
+  private static processDataForCompliance(data: PowerPlantData[], jurisdiction: 'EU' | 'US' | 'COMBINED'): EnhancedComplianceReportData {
+    const metrics = calculateAggregatedMetrics(data);
+    
+    // Group data by plant
+    const plantGroups = data.reduce((acc, record) => {
+      if (!acc[record.plant_id]) {
+        acc[record.plant_id] = [];
+      }
+      acc[record.plant_id].push(record);
+      return acc;
+    }, {} as Record<number, PowerPlantData[]>);
 
-    let content = `# ${report.title}\n\n`;
-    content += `**Generated:** ${new Date(report.generatedAt).toLocaleDateString()}\n`;
-    content += `**Reporting Entity:** ${report.reportingEntity}\n\n`;
-    
-    content += `## Executive Summary\n\n${report.executiveSummary}\n\n`;
-    
-    report.sections.forEach(section => {
-      content += `## ${section.title}\n\n${section.content}\n\n`;
-      section.subsections.forEach(subsection => {
-        content += `### ${subsection.title}\n\n${subsection.content}\n\n`;
-      });
+    const facilities = Object.values(plantGroups).map((plantData: PowerPlantData[]) => {
+      const first = plantData[0];
+      const totalEmissions = plantData.reduce((sum, d) => sum + d.CO2_emissions_tonnes, 0);
+      const avgEfficiency = plantData.reduce((sum, d) => sum + d.efficiency_percent, 0) / plantData.length;
+      
+      // Simulate compliance data
+      const allowancesAllocated = Math.ceil(totalEmissions * 1.1); // 10% buffer
+      const complianceStatus = totalEmissions <= allowancesAllocated ? 'compliant' : 'non_compliant';
+      
+      return {
+        id: first.plant_id.toString(),
+        name: first.plant_name,
+        location: this.getPlantLocation(first.plant_id),
+        sector: this.getSectorFromFuel(first.fuel_type),
+        totalEmissions: Math.round(totalEmissions),
+        verifiedEmissions: Math.round(totalEmissions * 0.98), // 98% verified
+        allowancesAllocated,
+        allowancesSurrendered: Math.round(totalEmissions),
+        complianceStatus: complianceStatus as 'compliant' | 'non_compliant'
+      };
     });
-    
-    content += `## Conclusion\n\n${report.conclusion}\n`;
-    
-    const blob = new Blob([content], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `EU_Emission_Report_${new Date().toISOString().split('T')[0]}.md`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
 
-  const exportData = async (format: 'JSON' | 'CSV' | 'XML') => {
-    setExportingData(true);
-    
-    try {
-      const data = await ComplianceReportService.exportData(format, 'internal');
-      const blob = new Blob([data], { 
-        type: format === 'JSON' ? 'application/json' : 
-             format === 'CSV' ? 'text/csv' : 'application/xml' 
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `compliance_data_${new Date().toISOString().split('T')[0]}.${format.toLowerCase()}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Export error:', error);
-      setError('Failed to export data');
-    } finally {
-      setExportingData(false);
+    const totalCH4 = data.reduce((sum, d) => sum + d.CH4_emissions_kg, 0) / 1000; // Convert to tonnes
+    const totalN2O = data.reduce((sum, d) => sum + d.N2O_emissions_kg, 0) / 1000; // Convert to tonnes
+
+    const baseData = {
+      reportingPeriod: {
+        startDate: '2025-01-01',
+        endDate: '2025-01-02',
+        year: 2025
+      },
+      facilities,
+      aggregatedData: {
+        totalCO2Emissions: metrics.totalEmissions,
+        totalCH4Emissions: Math.round(totalCH4 * 100) / 100,
+        totalN2OEmissions: Math.round(totalN2O * 100) / 100,
+        totalGHGEmissions: Math.round((metrics.totalEmissions + totalCH4 + totalN2O) * 100) / 100,
+        energyConsumption: metrics.totalFuelConsumption,
+        renewableEnergyShare: this.calculateRenewableShare(data)
+      },
+      csrdCompliance: {
+        doubleMateriality: true,
+        esrsStandards: ['ESRS E1', 'ESRS E2', 'ESRS E3'],
+        reportingDeadline: '2026-04-30',
+        auditRequired: true
+      },
+      etsCompliance: {
+        totalAllowances: facilities.reduce((sum, f) => sum + f.allowancesAllocated, 0),
+        totalEmissions: metrics.totalEmissions,
+        surplus: facilities.reduce((sum, f) => sum + (f.allowancesAllocated - f.totalEmissions), 0),
+        complianceGap: Math.max(0, metrics.totalEmissions - facilities.reduce((sum, f) => sum + f.allowancesAllocated, 0)),
+        verificationStatus: 'verified'
+      }
+    };
+
+    // Add SEC Climate Disclosure if US or COMBINED
+    let secDisclosure: SECClimateDisclosure | undefined;
+    if (jurisdiction === 'US' || jurisdiction === 'COMBINED') {
+      secDisclosure = this.generateSECDisclosure(data, metrics, totalCH4, totalN2O);
     }
-  };
 
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <FileText className="w-6 h-6 text-blue-600" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">Multi-Jurisdictional Compliance Report Generator</h3>
-            <p className="text-sm text-gray-600">Generate formal regulatory compliance reports for EU and US standards</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center space-x-3">
-          {/* Jurisdiction Selector */}
-          <div className="flex items-center space-x-2">
-            <Globe className="w-4 h-4 text-gray-500" />
-            <select
-              value={jurisdiction}
-              onChange={(e) => setJurisdiction(e.target.value as 'EU' | 'US' | 'COMBINED')}
-              className="text-sm border border-gray-300 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="EU">EU Only</option>
-              <option value="US">US Only</option>
-              <option value="COMBINED">EU + US</option>
-            </select>
-          </div>
-          
-          {!report && (
-            <button
-              onClick={generateReport}
-              disabled={loading}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Generating...</span>
-                </>
-              ) : (
-                <>
-                  <FileText className="w-4 h-4" />
-                  <span>Generate Report</span>
-                </>
-              )}
-            </button>
-          )}
-          
-          {report && (
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={downloadPDF}
-                disabled={downloadingPdf}
-                className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {downloadingPdf ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Generating PDF...</span>
-                  </>
-                ) : (
-                  <>
-                    <FileDown className="w-4 h-4" />
-                    <span>Download PDF</span>
-                  </>
-                )}
-              </button>
-              
-              {/* Data Export Dropdown */}
-              <div className="relative group">
-                <button
-                  disabled={exportingData}
-                  className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {exportingData ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Exporting...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Database className="w-4 h-4" />
-                      <span>Export Data</span>
-                    </>
-                  )}
-                </button>
-                
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                  <button
-                    onClick={() => exportData('JSON')}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                  >
-                    Export as JSON
-                  </button>
-                  <button
-                    onClick={() => exportData('CSV')}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                  >
-                    Export as CSV
-                  </button>
-                  <button
-                    onClick={() => exportData('XML')}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                  >
-                    Export as XML
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+    // Add EU Data Act Compliance
+    const dataActCompliance = this.generateDataActCompliance();
 
-      {error && (
-        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-3">
-          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-          <p className="text-sm text-red-700">{error}</p>
-        </div>
-      )}
+    // Generate compliance mapping
+    const complianceMapping = {
+      eu: ['CSRD', 'ESRS E1', 'ESRS E2', 'EU ETS', 'MRV', 'UNFCCC'],
+      us: ['SEC Climate Rule', 'SEC 10-K', 'SEC 8-K'],
+      dataAct: ['Data Interoperability', 'Data Portability', 'Access Controls', 'Audit Logging']
+    };
 
-      {report && (
-        <div className="space-y-6">
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center space-x-3">
-            <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-green-900">Report Generated Successfully</p>
-              <p className="text-xs text-green-700">
-                Generated on {new Date(report.generatedAt).toLocaleString()} | {report.jurisdiction} | {report.framework.join(', ')}
-              </p>
-            </div>
-          </div>
+    // ✅ Correct return inside the same function
+    return {
+      ...baseData,
+      secDisclosure,
+      dataActCompliance,
+      complianceMapping
+    };
+  }
 
-          {/* Compliance Framework Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-center space-x-2 mb-2">
-                <Globe className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-900">Jurisdiction</span>
-              </div>
-              <p className="text-lg font-bold text-blue-800">{report.jurisdiction}</p>
-            </div>
-            
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="flex items-center space-x-2 mb-2">
-                <Shield className="w-4 h-4 text-green-600" />
-                <span className="text-sm font-medium text-green-900">Frameworks</span>
-              </div>
-              <p className="text-lg font-bold text-green-800">{report.framework.length}</p>
-            </div>
-            
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-              <div className="flex items-center space-x-2 mb-2">
-                <Database className="w-4 h-4 text-purple-600" />
-                <span className="text-sm font-medium text-purple-900">Data Act</span>
-              </div>
-              <p className="text-lg font-bold text-purple-800">Compliant</p>
-            </div>
-          </div>
-
-          <div className="border border-gray-200 rounded-lg overflow-hidden">
-            <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-              <h4 className="font-medium text-gray-900">{report.title}</h4>
-              <p className="text-sm text-gray-600">{report.reportingEntity}</p>
-            </div>
-            
-            <div className="p-4 max-h-96 overflow-y-auto">
-              <div className="prose prose-sm max-w-none">
-                <h5 className="text-sm font-semibold text-gray-900 mb-2">Executive Summary</h5>
-                <p className="text-sm text-gray-700 mb-4">{report.executiveSummary}</p>
-                
-                {report.sections.map((section, index) => (
-                  <div key={index} className="mb-4">
-                    <h5 className="text-sm font-semibold text-gray-900 mb-2">{section.title}</h5>
-                    <p className="text-xs text-gray-600 mb-2">{section.content}</p>
-                    
-                    {section.subsections.map((subsection, subIndex) => (
-                      <div key={subIndex} className="ml-4 mb-2">
-                        <h6 className="text-xs font-medium text-gray-800">{subsection.title}</h6>
-                        <p className="text-xs text-gray-600">{subsection.content.substring(0, 150)}...</p>
-                      </div>
-                    ))}
-                  </div>
-                ))}
-                
-                <h5 className="text-sm font-semibold text-gray-900 mb-2">Conclusion</h5>
-                <p className="text-sm text-gray-700">{report.conclusion}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+  // --- rest of your code stays the same ---
+  // generateSECDisclosure, generateDataActCompliance, generateReport, generateExecutiveSummary, 
+  // generateCSRDSection, generateESRSSection, generateETSSection, generateClimateMonitoringSection,
+  // generateSECSection, generateDataActSection, generateConclusion, getPlantLocation, getSectorFromFuel, 
+  // calculateRenewableShare, exportData, applyRoleBasedFiltering, convertToCSV, convertToXML
+}
