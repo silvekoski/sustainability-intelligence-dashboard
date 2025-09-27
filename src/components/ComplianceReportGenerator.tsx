@@ -165,33 +165,23 @@ export const ComplianceReportGenerator: React.FC = () => {
           )}
           
           {report && (
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={downloadPDF}
-                disabled={downloadingPdf}
-                className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {downloadingPdf ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Generating PDF...</span>
-                  </>
-                ) : (
-                  <>
-                    <FileDown className="w-4 h-4" />
-                    <span>Download PDF</span>
-                  </>
-                )}
-              </button>
-              
-              <button
-                onClick={downloadMarkdown}
-                className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                <Download className="w-4 h-4" />
-                <span>Download MD</span>
-              </button>
-            </div>
+            <button
+              onClick={downloadPDF}
+              disabled={downloadingPdf}
+              className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {downloadingPdf ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Generating PDF...</span>
+                </>
+              ) : (
+                <>
+                  <FileDown className="w-4 h-4" />
+                  <span>Download PDF</span>
+                </>
+              )}
+            </button>
           )}
         </div>
       </div>
