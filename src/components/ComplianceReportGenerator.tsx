@@ -173,8 +173,8 @@ Compliance Status: ${facility.complianceStatus.toUpperCase()}`;
           const secText = `Climate-Related Risks Assessment:
 Physical Risks: Extreme weather events, sea level rise, temperature changes
 Transition Risks: Policy changes, technology shifts, market preferences
-Financial Impact: Estimated EUR ${report.secDisclosure.financialImpacts.carbonCosts.toLocaleString()} in carbon costs
-Capital Expenditures: EUR ${report.secDisclosure.financialImpacts.capexInvestments.toLocaleString()} in climate-related investments
+Financial Impact: Estimated EUR ${(report.secDisclosure.financialImpacts.costs[0]?.amount || 0).toLocaleString()} in carbon costs
+Capital Expenditures: EUR ${(report.secDisclosure.financialImpacts.capitalExpenditures[0]?.amount || 0).toLocaleString()} in climate-related investments
 Scenario Analysis: 1.5°C and 3°C pathways analyzed with net-zero targets by 2050`;
 
           yPosition = addWrappedText(secText, margin, yPosition, contentWidth, 11);
