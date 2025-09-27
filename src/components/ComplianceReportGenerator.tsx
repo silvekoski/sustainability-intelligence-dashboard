@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { ComplianceReportService } from '../services/complianceReportService';
+import { SECComplianceService } from '../services/secComplianceService';
+import { SECComplianceTable } from './SECComplianceTable';
 import { Download, FileText, Loader2, Globe, Flag, Database } from 'lucide-react';
 import { PowerPlantData } from '../types';
+import { SECComplianceReport } from '../types/secCompliance';
 
 interface ComplianceReportGeneratorProps {
   currentData?: PowerPlantData[] | null;
@@ -10,12 +13,35 @@ interface ComplianceReportGeneratorProps {
 export const ComplianceReportGenerator: React.FC<ComplianceReportGeneratorProps> = ({ currentData }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [jurisdiction, setJurisdiction] = useState<'EU' | 'US' | 'COMBINED'>('COMBINED');
+  const [secReport, setSecReport] = useState<SECComplianceReport | null>(null);
+  const [showSecTable, setShowSecTable] = useState(false);
+
+  // Generate SEC compliance report when data changes
+  React.useEffect(() => {
+    if (currentData && currentData.length > 0) {
+      try {
+        const report = SECComplianceService.calculateSECCompliance(currentData);
+        setSecReport(report);
+      } catch (error) {
+        console.error('Error generating SEC report:', error);
+        setSecReport(null);
+      }
+    } else {
+      setSecReport(null);
+    }
+  }, [currentData]);
 
   const handleGenerateReport = async () => {
     setIsGenerating(true);
     try {
       // Pass the current CSV data to the report service
       const report = await ComplianceReportService.generateComplianceReport(jurisdiction, currentData || undefined);
+
+      // Generate SEC report if needed
+      let secComplianceReport: SECComplianceReport | null = null;
+      if ((jurisdiction === 'US' || jurisdiction === 'COMBINED') && currentData && currentData.length > 0) {
+        secComplianceReport = SECComplianceService.calculateSECCompliance(currentData);
+      }
 
       // Generate PDF
       const { jsPDF } = await import('jspdf');
@@ -168,7 +194,7 @@ Compliance Status: ${facility.complianceStatus.toUpperCase()}`;
         yPosition += 15;
 
         // SEC Eligible Facilities Table
-        if (report.secEligibleFacilities && report.secEligibleFacilities.length > 0) {
+        if (secComplianceReport && secComplianceReport.facilities.length > 0) {
           pdf.setFontSize(14);
           pdf.setFont('helvetica', 'bold');
           pdf.text('SEC Reporting Entities', margin, yPosition);
@@ -177,8 +203,8 @@ Compliance Status: ${facility.complianceStatus.toUpperCase()}`;
           // Table headers
           pdf.setFontSize(10);
           pdf.setFont('helvetica', 'bold');
-          const headers = ['Facility', 'Location', 'Sector', 'CO2e (t)', 'Energy (MWh)', 'Renewables %', 'Status'];
-          const colWidths = [35, 30, 25, 20, 25, 20, 25];
+          const headers = ['Facility', 'Location', 'Sector', 'GHG (tCO2e)', 'Energy (MWh)', 'Renewables %', 'Status'];
+          const colWidths = [35, 25, 20, 25, 25, 20, 30];
           let xPos = margin;
           
           headers.forEach((header, i) => {
@@ -189,7 +215,7 @@ Compliance Status: ${facility.complianceStatus.toUpperCase()}`;
 
           // Table rows
           pdf.setFont('helvetica', 'normal');
-          report.secEligibleFacilities.forEach((facility) => {
+          secComplianceReport.facilities.forEach((facility) => {
             if (yPosition > pageHeight - 30) {
               pdf.addPage();
               yPosition = margin;
@@ -199,8 +225,8 @@ Compliance Status: ${facility.complianceStatus.toUpperCase()}`;
             const rowData = [
               facility.facility,
               facility.location,
-              facility.sector.replace('Energy - ', ''),
-              facility.emissionsCO2e.toLocaleString(),
+              facility.sector,
+              SECComplianceService.formatNumber(facility.emissionsCO2e, 1),
               facility.energyMWh.toLocaleString(),
               `${facility.renewableShare}%`,
               facility.complianceStatus
@@ -215,11 +241,7 @@ Compliance Status: ${facility.complianceStatus.toUpperCase()}`;
           yPosition += 10;
 
           // SEC Summary
-          const totalEmissions = report.secEligibleFacilities.reduce((sum, f) => sum + f.emissionsCO2e, 0);
-          const totalEnergy = report.secEligibleFacilities.reduce((sum, f) => sum + f.energyMWh, 0);
-          const avgRenewables = report.secEligibleFacilities.reduce((sum, f) => sum + f.renewableShare, 0) / report.secEligibleFacilities.length;
-          const compliantCount = report.secEligibleFacilities.filter(f => f.complianceStatus === 'Compliant').length;
-          const totalCount = report.secEligibleFacilities.length;
+          const summary = secComplianceReport.summary;
 
           pdf.setFontSize(12);
           pdf.setFont('helvetica', 'bold');
@@ -227,10 +249,11 @@ Compliance Status: ${facility.complianceStatus.toUpperCase()}`;
           yPosition += 15;
 
           pdf.setFont('helvetica', 'normal');
-          const summaryText = `Total GHG Emissions: ${totalEmissions.toLocaleString()} tCO2e
-Total Energy Consumption: ${totalEnergy.toLocaleString()} MWh (${avgRenewables.toFixed(1)}% renewables)
-SEC Reporting Entities: ${totalCount}
-Compliant Facilities: ${compliantCount} | Non-compliant: ${totalCount - compliantCount}`;
+          const summaryText = `Total GHG Emissions: ${SECComplianceService.formatNumber(summary.totalGHGEmissions, 1)} tCO2e
+Total Energy Consumption: ${SECComplianceService.formatNumber(summary.totalEnergyConsumption)} MWh (${summary.weightedRenewableShare}% renewables)
+SEC Reporting Entities: ${summary.facilitiesCount}
+Compliant Facilities: ${summary.compliantFacilities} | Non-compliant: ${summary.nonCompliantFacilities}
+Overall Compliance Status: ${summary.overallComplianceStatus}`;
 
           yPosition = addWrappedText(summaryText, margin, yPosition, contentWidth, 11);
           yPosition += 15;
@@ -242,9 +265,12 @@ Compliant Facilities: ${compliantCount} | Non-compliant: ${totalCount - complian
           yPosition += 12;
 
           pdf.setFont('helvetica', 'normal');
-          const riskText = `Physical Risks: Extreme weather events affecting power generation facilities
-Transition Risks: Carbon pricing and emission regulations, technology shifts
-Financial Impact: Estimated EUR ${(totalEmissions * 85).toLocaleString()} in annual carbon costs
+          const climateRisks = SECComplianceService.generateClimateRisks();
+          const financialImpacts = SECComplianceService.generateFinancialImpacts(summary);
+          
+          const riskText = `Physical Risks: ${climateRisks.filter(r => r.type === 'Physical').length} risks identified
+Transition Risks: ${climateRisks.filter(r => r.type === 'Transition').length} risks identified
+Financial Impact: ${SECComplianceService.formatCurrency(financialImpacts[0]?.amount || 0)} in annual carbon costs
 Scenario Analysis: 1.5°C and 3°C pathways analyzed with net-zero targets by 2050`;
 
           yPosition = addWrappedText(riskText, margin, yPosition, contentWidth, 11);
@@ -369,21 +395,43 @@ Data Act Compliance: Data interoperability and portability implemented`;
         </div>
 
         {/* Generate Report Button */}
-        <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+        <div className="flex justify-between items-center pt-4 border-t border-gray-200 mb-6">
           <div className="flex items-center space-x-2 text-sm text-gray-600">
             <Database className="w-4 h-4" />
             <span>Data export available in JSON, CSV, XML formats</span>
           </div>
 
-          <button
-            onClick={handleGenerateReport}
-            disabled={isGenerating}
-            className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white px-6 py-2 rounded-lg font-medium transition-colors"
-          >
-            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            <span>{isGenerating ? 'Generating...' : 'Generate PDF Report'}</span>
-          </button>
+          <div className="flex items-center space-x-3">
+            {secReport && (
+              <button
+                onClick={() => setShowSecTable(!showSecTable)}
+                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                <FileText className="w-4 h-4" />
+                <span>{showSecTable ? 'Hide' : 'Show'} SEC Table</span>
+              </button>
+            )}
+            
+            <button
+              onClick={handleGenerateReport}
+              disabled={isGenerating}
+              className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+            >
+              {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              <span>{isGenerating ? 'Generating...' : 'Generate PDF Report'}</span>
+            </button>
+          </div>
         </div>
+
+        {/* SEC Compliance Table */}
+        {showSecTable && secReport && (
+          <div className="mt-6">
+            <SECComplianceTable 
+              facilities={secReport.facilities} 
+              summary={secReport.summary} 
+            />
+          </div>
+        )}
       </div>
     </div>
   );

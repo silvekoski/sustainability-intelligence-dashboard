@@ -1,7 +1,8 @@
 import { ComplianceReportData, ComplianceReport, ReportSection } from '../types/compliance';
 import { 
   EnhancedComplianceReportData, 
-  SECClimateDisclosure, 
+  SECClimateDisclosure,
+  SECFacilityData,
   DataActCompliance,
   ClimateRisk,
   FinancialImpact,
@@ -11,7 +12,7 @@ import {
 import { PowerPlantData } from '../types';
 import { calculateAggregatedMetrics } from '../utils/dataParser';
 import { CSVService } from './csvService';
-import { useAuth } from '../contexts/AuthContext';
+import { SECComplianceService } from './secComplianceService';
 
 export class ComplianceReportService {
   static async generateComplianceReport(jurisdiction: 'EU' | 'US' | 'COMBINED' = 'COMBINED', customData?: PowerPlantData[]): Promise<ComplianceReport> {
@@ -45,6 +46,14 @@ export class ComplianceReportService {
     
     // Extract SEC-eligible facilities (US companies + non-US with US operations)
     const secEligibleFacilities = this.extractSECEligibleFacilities(data);
+    
+    // Generate SEC compliance report using the new service
+    let secComplianceReport = null;
+    try {
+      secComplianceReport = SECComplianceService.calculateSECCompliance(data);
+    } catch (error) {
+      console.warn('Could not generate SEC compliance report:', error);
+    }
     
     // Group data by plant
     const plantGroups = data.reduce((acc, record) => {
@@ -130,6 +139,7 @@ export class ComplianceReportService {
     return {
       ...baseData,
       secDisclosure,
+      secEligibleFacilities: secComplianceReport?.facilities || secEligibleFacilities,
       dataActCompliance,
       complianceMapping
     };
@@ -327,7 +337,7 @@ export class ComplianceReportService {
   }
 
   // Extract facilities subject to SEC climate disclosure requirements
-  private static extractSECEligibleFacilities(data: PowerPlantData[]) {
+  private static extractSECEligibleFacilities(data: PowerPlantData[]): SECFacilityData[] {
     // Group data by plant
     const plantGroups = data.reduce((acc, record) => {
       if (!acc[record.plant_id]) {
@@ -371,9 +381,9 @@ export class ComplianceReportService {
       
       return {
         facility: first.plant_name,
-        location: isUSCompany ? 'US' : `${location} (US Ops)`,
+        location: isUSCompany ? 'US' : `${location} (US Operations)`,
         sector: this.getSECSector(first.fuel_type),
-        emissionsCO2e: Math.round(totalCO2e),
+        emissionsCO2e: Math.round(totalCO2e * 100) / 100,
         emissionsCO2: Math.round(totalCO2),
         emissionsCH4: Math.round(totalCH4 * 1000) / 1000, // Keep 3 decimals
         emissionsN2O: Math.round(totalN2O * 1000) / 1000, // Keep 3 decimals
@@ -381,7 +391,7 @@ export class ComplianceReportService {
         renewableShare,
         allowancesAllocated,
         allowancesUsed,
-        complianceStatus,
+        complianceStatus: complianceStatus as 'Compliant' | 'Shortfall' | 'Surplus',
         secNote
       };
     }).filter(Boolean); // Remove null entries
