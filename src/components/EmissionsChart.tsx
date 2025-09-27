@@ -114,20 +114,17 @@ export const EmissionsChart = ({ data }: EmissionsChartProps) => {
       <div className="relative">
         {/* Y-axis labels */}
         <div className="absolute left-0 top-0 h-80 flex flex-col justify-between text-xs text-gray-500 -ml-16">
-          {data.map((item, index) => {
-            if (index % 3 === 0 || index === data.length - 1) { // Show every 3rd value plus the last one
-              const position = ((item.tCO2e - scaledMin) / effectiveRange) * 100;
-              return (
-                <span 
-                  key={index}
-                  className="absolute text-right"
-                  style={{ bottom: `${position}%`, transform: 'translateY(50%)' }}
-                >
-                  {item.tCO2e.toFixed(0)}
-                </span>
-              );
-            }
-            return null;
+          {[0, 25, 50, 75, 100].map((percent) => {
+            const value = scaledMin + (effectiveRange * percent / 100);
+            return (
+              <span 
+                key={percent}
+                className="absolute text-right"
+                style={{ bottom: `${percent}%`, transform: 'translateY(50%)' }}
+              >
+                {value.toFixed(0)}
+              </span>
+            );
           })}
         </div>
 
