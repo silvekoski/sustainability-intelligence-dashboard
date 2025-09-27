@@ -52,62 +52,158 @@ export const SatelliteHeatTracker: React.FC<SatelliteHeatTrackerProps> = ({ fact
   const MapVisualization = () => {
     if (!factories.length) return null;
 
-    // Calculate bounds for the map
-    const lats = factories.map(f => f.latitude);
-    const lngs = factories.map(f => f.longitude);
-    const minLat = Math.min(...lats);
-    const maxLat = Math.max(...lats);
-    const minLng = Math.min(...lngs);
-    const maxLng = Math.max(...lngs);
-
-    const latRange = maxLat - minLat || 1;
-    const lngRange = maxLng - minLng || 1;
+    // World map bounds (Web Mercator projection approximation)
+    const worldBounds = {
+      minLat: -85,
+      maxLat: 85,
+      minLng: -180,
+      maxLng: 180
+    };
+    
+    // Convert lat/lng to pixel coordinates
+    const latToY = (lat: number) => {
+      const latRad = (lat * Math.PI) / 180;
+      const mercN = Math.log(Math.tan((Math.PI / 4) + (latRad / 2)));
+      return (1 - (mercN / Math.PI)) * 50; // Scale to 0-100%
+    };
+    
+    const lngToX = (lng: number) => {
+      return ((lng + 180) / 360) * 100; // Scale to 0-100%
+    };
 
     return (
-      <div className="relative rounded-lg h-96 overflow-hidden border border-gray-300 shadow-inner">
-        {/* Realistic map background with terrain */}
+      <div className="relative rounded-lg h-96 overflow-hidden border border-gray-300 shadow-inner bg-blue-100">
+        {/* World map base layer */}
         <div className="absolute inset-0">
-          {/* Base terrain layer */}
-          <div className="w-full h-full bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100"></div>
+          {/* Ocean base */}
+          <div className="w-full h-full bg-gradient-to-br from-blue-200 via-blue-300 to-blue-400"></div>
           
-          {/* Terrain features */}
-          <div className="absolute inset-0 opacity-30">
-            {/* Mountain ranges */}
-            <div className="absolute top-4 left-8 w-32 h-16 bg-gradient-to-b from-gray-400 to-gray-600 rounded-full transform rotate-12 opacity-40"></div>
-            <div className="absolute top-12 right-16 w-24 h-12 bg-gradient-to-b from-gray-300 to-gray-500 rounded-full transform -rotate-6 opacity-40"></div>
+          {/* Continental landmasses (simplified) */}
+          <div className="absolute inset-0">
+            {/* North America */}
+            <div className="absolute bg-gradient-to-br from-green-200 to-green-400 rounded-lg opacity-80"
+                 style={{ 
+                   left: '10%', top: '15%', 
+                   width: '25%', height: '35%',
+                   clipPath: 'polygon(20% 0%, 100% 0%, 95% 70%, 80% 100%, 0% 90%, 5% 40%)'
+                 }}>
+            </div>
             
-            {/* Rivers/waterways */}
-            <div className="absolute top-20 left-0 w-full h-2 bg-gradient-to-r from-transparent via-blue-300 to-transparent transform rotate-3 opacity-50"></div>
-            <div className="absolute bottom-16 left-0 w-full h-1 bg-gradient-to-r from-blue-200 via-transparent to-blue-200 transform -rotate-1 opacity-40"></div>
+            {/* South America */}
+            <div className="absolute bg-gradient-to-br from-green-300 to-yellow-400 rounded-lg opacity-80"
+                 style={{ 
+                   left: '20%', top: '50%', 
+                   width: '15%', height: '40%',
+                   clipPath: 'polygon(30% 0%, 100% 10%, 80% 100%, 0% 90%, 10% 30%)'
+                 }}>
+            </div>
             
-            {/* Forest areas */}
-            <div className="absolute bottom-8 left-12 w-40 h-20 bg-gradient-radial from-green-300 to-green-500 rounded-full opacity-30"></div>
-            <div className="absolute top-16 right-8 w-28 h-16 bg-gradient-radial from-green-200 to-green-400 rounded-full opacity-25"></div>
+            {/* Europe */}
+            <div className="absolute bg-gradient-to-br from-green-200 to-yellow-300 rounded-lg opacity-80"
+                 style={{ 
+                   left: '48%', top: '20%', 
+                   width: '12%', height: '20%',
+                   clipPath: 'polygon(0% 40%, 80% 0%, 100% 60%, 60% 100%, 20% 80%)'
+                 }}>
+            </div>
             
-            {/* Urban areas */}
-            <div className="absolute bottom-20 right-20 w-16 h-16 bg-gradient-to-br from-gray-200 to-gray-400 opacity-20"></div>
+            {/* Africa */}
+            <div className="absolute bg-gradient-to-br from-yellow-300 to-orange-400 rounded-lg opacity-80"
+                 style={{ 
+                   left: '45%', top: '35%', 
+                   width: '15%', height: '35%',
+                   clipPath: 'polygon(40% 0%, 100% 20%, 90% 100%, 10% 95%, 0% 60%, 20% 10%)'
+                 }}>
+            </div>
+            
+            {/* Asia */}
+            <div className="absolute bg-gradient-to-br from-green-300 to-yellow-400 rounded-lg opacity-80"
+                 style={{ 
+                   left: '60%', top: '10%', 
+                   width: '35%', height: '45%',
+                   clipPath: 'polygon(0% 30%, 70% 0%, 100% 40%, 90% 80%, 60% 100%, 20% 90%, 10% 60%)'
+                 }}>
+            </div>
+            
+            {/* Australia */}
+            <div className="absolute bg-gradient-to-br from-orange-300 to-red-400 rounded-lg opacity-80"
+                 style={{ 
+                   left: '75%', top: '65%', 
+                   width: '12%', height: '15%',
+                   clipPath: 'polygon(20% 30%, 100% 0%, 90% 100%, 0% 80%)'
+                 }}>
+            </div>
           </div>
           
-          {/* Grid lines for map authenticity */}
+          {/* Geographic features overlay */}
+          <div className="absolute inset-0 opacity-40">
+            {/* Mountain ranges - Himalayas */}
+            <div className="absolute bg-gradient-to-b from-gray-400 to-gray-600 rounded-full transform rotate-12"
+                 style={{ left: '70%', top: '25%', width: '15%', height: '8%' }}>
+            </div>
+            
+            {/* Rocky Mountains */}
+            <div className="absolute bg-gradient-to-b from-gray-300 to-gray-500 rounded-full transform rotate-45"
+                 style={{ left: '15%', top: '20%', width: '3%', height: '25%' }}>
+            </div>
+            
+            {/* Andes */}
+            <div className="absolute bg-gradient-to-b from-gray-400 to-gray-600 rounded-full transform rotate-12"
+                 style={{ left: '22%', top: '50%', width: '2%', height: '35%' }}>
+            </div>
+            
+            {/* Major rivers - Amazon */}
+            <div className="absolute h-1 bg-blue-400 transform rotate-6 opacity-60"
+                 style={{ left: '20%', top: '60%', width: '12%' }}>
+            </div>
+            
+            {/* Nile */}
+            <div className="absolute h-1 bg-blue-400 transform -rotate-12 opacity-60"
+                 style={{ left: '52%', top: '40%', width: '8%' }}>
+            </div>
+            
+            {/* Sahara Desert */}
+            <div className="absolute bg-gradient-radial from-yellow-400 to-orange-500 rounded-full opacity-30"
+                 style={{ left: '45%', top: '35%', width: '12%', height: '10%' }}>
+            </div>
+            
+            {/* Amazon Rainforest */}
+            <div className="absolute bg-gradient-radial from-green-400 to-green-600 rounded-full opacity-40"
+                 style={{ left: '18%', top: '55%', width: '15%', height: '12%' }}>
+            </div>
+          </div>
+          
+          {/* Latitude/Longitude grid */}
           <div className="absolute inset-0 opacity-10">
-            {/* Latitude lines */}
-            {[...Array(8)].map((_, i) => (
-              <div key={`lat-${i}`} className="absolute w-full h-px bg-gray-400" style={{ top: `${(i + 1) * 12}%` }}></div>
+            {/* Latitude lines (horizontal) */}
+            {[-60, -30, 0, 30, 60].map((lat, i) => (
+              <div key={`lat-${lat}`} className="absolute w-full h-px bg-gray-600" 
+                   style={{ top: `${latToY(lat)}%` }}>
+                <span className="absolute left-2 -top-2 text-xs text-gray-600 font-mono">
+                  {lat}°
+                </span>
+              </div>
             ))}
-            {/* Longitude lines */}
-            {[...Array(10)].map((_, i) => (
-              <div key={`lng-${i}`} className="absolute h-full w-px bg-gray-400" style={{ left: `${(i + 1) * 10}%` }}></div>
+            {/* Longitude lines (vertical) */}
+            {[-120, -60, 0, 60, 120].map((lng, i) => (
+              <div key={`lng-${lng}`} className="absolute h-full w-px bg-gray-600" 
+                   style={{ left: `${lngToX(lng)}%` }}>
+                <span className="absolute -bottom-4 -left-3 text-xs text-gray-600 font-mono">
+                  {lng}°
+                </span>
+              </div>
             ))}
           </div>
         </div>
 
         {/* Factory markers */}
         {factories.map((factory, index) => {
-          const x = ((factory.longitude - minLng) / lngRange) * 100;
-          const y = ((maxLat - factory.latitude) / latRange) * 100;
+          const x = lngToX(factory.longitude);
+          const y = latToY(factory.latitude);
 
           return (
-            <div key={index} className="absolute transform -translate-x-1/2 -translate-y-1/2" style={{ left: `${Math.max(5, Math.min(95, x))}%`, top: `${Math.max(5, Math.min(95, y))}%` }}>
+            <div key={index} className="absolute transform -translate-x-1/2 -translate-y-1/2" 
+                 style={{ left: `${Math.max(2, Math.min(98, x))}%`, top: `${Math.max(2, Math.min(98, y))}%` }}>
               {/* Heat plume effect */}
               <div className={`absolute inset-0 rounded-full blur-md opacity-40 animate-pulse ${
                 factory.status === 'red' ? 'bg-red-400 w-16 h-16' :
@@ -131,7 +227,7 @@ export const SatelliteHeatTracker: React.FC<SatelliteHeatTrackerProps> = ({ fact
                   <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-1 h-3 bg-gray-600 rounded-t"></div>
                   {/* Heat index label */}
                   <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 text-white text-xs px-1 py-0.5 rounded whitespace-nowrap">
-                    {factory.heat_index.toFixed(1)}
+                    HI: {factory.heat_index.toFixed(1)}
                   </div>
                 </div>
               </div>
@@ -139,7 +235,7 @@ export const SatelliteHeatTracker: React.FC<SatelliteHeatTrackerProps> = ({ fact
               {/* Tooltip */}
               {selectedFactory?.factory_name === factory.factory_name && (
                 <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-xl border border-gray-300 p-4 min-w-56 z-30">
-                  <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white border-r border-b border-gray-300 rotate-45"></div>
+                  <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white border-r border-b border-gray-300 rotate-45 z-20"></div>
                   <div className="text-sm font-semibold text-gray-900 mb-2">{factory.factory_name}</div>
                   <div className="space-y-1 text-xs text-gray-600">
                     <div>Heat Index: <span className="font-medium">{factory.heat_index.toFixed(1)}</span></div>
@@ -157,7 +253,7 @@ export const SatelliteHeatTracker: React.FC<SatelliteHeatTrackerProps> = ({ fact
           );
         })}
 
-        {/* Enhanced map legend */}
+        {/* Map legend */}
         <div className="absolute top-4 right-4 bg-white bg-opacity-95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-300 p-4">
           <div className="text-xs font-semibold text-gray-900 mb-2">Heat Index</div>
           <div className="space-y-2">
@@ -177,15 +273,16 @@ export const SatelliteHeatTracker: React.FC<SatelliteHeatTrackerProps> = ({ fact
         </div>
         
         {/* Map coordinates display */}
-        <div className="absolute bottom-4 left-4 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded font-mono">
-          {minLat.toFixed(2)}°N, {minLng.toFixed(2)}°E
+        <div className="absolute bottom-4 left-4 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded font-mono flex items-center space-x-2">
+          <span>🌍</span>
+          <span>World Map View</span>
         </div>
         
-        {/* Scale indicator */}
+        {/* Scale and projection info */}
         <div className="absolute bottom-4 right-4 bg-white bg-opacity-90 px-2 py-1 rounded text-xs text-gray-700">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-px bg-gray-800"></div>
-            <span>~50km</span>
+            <div className="w-12 h-px bg-gray-800"></div>
+            <span>Web Mercator</span>
           </div>
         </div>
       </div>
