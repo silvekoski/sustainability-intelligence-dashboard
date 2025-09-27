@@ -129,17 +129,9 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Charts and Analytics */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         <div className="lg:col-span-2">
           <EmissionsChart data={emissionsTrends} />
-        </div>
-        
-        <div>
-          <PermitsStatusWidget data={permitsData} />
-        </div>
-        
-        <div>
-          <EUPermitsCard />
         </div>
         
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -157,6 +149,13 @@ export const Dashboard: React.FC = () => {
               />
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* EU Permits Analysis */}
+      <div className="mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
+          <EUPermitsCard />
         </div>
       </div>
 
