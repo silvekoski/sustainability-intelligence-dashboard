@@ -2,19 +2,16 @@ import { Activity, Settings, Bell, User, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useOrganization } from '../contexts/OrganizationContext';
 
 export const Header = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
-  // Temporarily disable auth
-  const user = { email: 'demo@example.com' };
-  const profile = { full_name: 'Demo User' };
-  const logout = async () => {};
+  const { user, profile, logout } = useAuth();
+  const { currentOrganization, licenseInfo } = useOrganization();
   
-  /* const { user, profile, logout } = useAuth();
-
   const handleLogout = async () => {
     await logout();
-  }; */
+  };
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
@@ -26,9 +23,21 @@ export const Header = () => {
             className="h-8 w-auto"
           />
           <div className="h-6 w-px bg-gray-300" />
-          <h1 className="text-xl font-semibold text-gray-900">
-            Sustainability Intelligence Dashboard
-          </h1>
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900">
+              Sustainability Intelligence Dashboard
+            </h1>
+            {currentOrganization && (
+              <p className="text-sm text-gray-500">
+                {currentOrganization.name}
+                {licenseInfo && (
+                  <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                    {licenseInfo.type}
+                  </span>
+                )}
+              </p>
+            )}
+          </div>
         </div>
         
         <div className="flex items-center space-x-4">
