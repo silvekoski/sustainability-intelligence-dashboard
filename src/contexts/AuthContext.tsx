@@ -54,7 +54,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               .from('profiles')
               .select('*')
               .eq('id', session.user.id)
-              .maybeSingle();
+              .single();
             profile = data;
           } catch (error) {
             console.warn('Profile fetch failed:', error);
@@ -96,7 +96,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const timer = setTimeout(initializeAuth, 100);
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: subscription } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
 
@@ -117,7 +117,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           } catch (error: any) {
             console.warn('Profile fetch failed, creating profile:', error);
             // If profile doesn't exist, create it
-            if (error.code === 'PGRST116') {
+            if (error?.code === 'PGRST116') {
               try {
                 const { data: newProfile } = await supabase
                   .from('profiles')
@@ -160,7 +160,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => {
       mounted = false;
       clearTimeout(timer);
-      subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, []);
 
@@ -260,7 +260,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const updateProfile = async (data: { full_name: string; avatar_url?: string }) => {
-    if (!state.user) return { error: { message: 'No user logged in' } };
+    if (!state.user) return Promise.resolve({ error: { message: 'No user logged in' } });
     
     setState(prev => ({ ...prev, loading: true }));
     
