@@ -2,6 +2,53 @@ import React from 'react';
 import { FileText, Download, Calendar, TrendingUp, BarChart3, PieChart } from 'lucide-react';
 
 export const Reports: React.FC = () => {
+  // Function to handle report downloads
+  const handleDownload = (report: any) => {
+    // In a real application, this would fetch the actual file from the server
+    // For demo purposes, we'll simulate a download with a blob
+    
+    // Create sample PDF content (in reality, this would come from your backend)
+    const sampleContent = `
+${report.title}
+Generated: ${formatDate(report.date)}
+
+${report.description}
+
+This is a sample report demonstrating the download functionality.
+In a production environment, this would contain:
+- Detailed analytics and metrics
+- Charts and visualizations
+- Executive summaries
+- Compliance data
+- Recommendations and insights
+
+Report ID: ${report.id}
+Format: ${report.format}
+Size: ${report.size}
+Status: ${report.status}
+    `;
+
+    // Create a blob with the content
+    const blob = new Blob([sampleContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    
+    // Create a temporary download link
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${report.title.replace(/\s+/g, '_')}_${report.date}.txt`;
+    
+    // Trigger the download
+    document.body.appendChild(link);
+    link.click();
+    
+    // Clean up
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    // Show success message (you could replace this with a toast notification)
+    alert(`Downloading: ${report.title}`);
+  };
+
   const reports = [
     {
       id: 1,
@@ -160,7 +207,10 @@ export const Reports: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="flex items-center space-x-3 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors">
+          <button 
+            onClick={() => alert('Generating monthly report... This would trigger report generation in a real application.')}
+            className="flex items-center space-x-3 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors"
+          >
             <BarChart3 className="w-6 h-6 text-blue-600" />
             <div className="text-left">
               <div className="font-medium text-blue-900">Generate Monthly Report</div>
@@ -168,7 +218,10 @@ export const Reports: React.FC = () => {
             </div>
           </button>
           
-          <button className="flex items-center space-x-3 p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors">
+          <button 
+            onClick={() => alert('Opening custom report builder... This would open a report configuration modal in a real application.')}
+            className="flex items-center space-x-3 p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors"
+          >
             <PieChart className="w-6 h-6 text-green-600" />
             <div className="text-left">
               <div className="font-medium text-green-900">Custom Report</div>
@@ -176,7 +229,10 @@ export const Reports: React.FC = () => {
             </div>
           </button>
           
-          <button className="flex items-center space-x-3 p-4 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors">
+          <button 
+            onClick={() => alert('Generating executive summary... This would create a high-level report in a real application.')}
+            className="flex items-center space-x-3 p-4 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors"
+          >
             <FileText className="w-6 h-6 text-purple-600" />
             <div className="text-left">
               <div className="font-medium text-purple-900">Executive Summary</div>
@@ -247,7 +303,10 @@ export const Reports: React.FC = () => {
                 </div>
                 
                 {report.status === 'ready' && (
-                  <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                  <button 
+                    onClick={() => handleDownload(report)}
+                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
                     <Download className="w-4 h-4" />
                     <span>Download</span>
                   </button>
