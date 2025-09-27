@@ -24,12 +24,13 @@ export const FactoryComparisonBar: React.FC<FactoryComparisonBarProps> = ({ fact
   const processFactories = (factories: FactoryData[]): ProcessedFactory[] => {
     if (!factories.length) return [];
 
-    // Calculate cohort statistics
-    const efficiencies = factories.map(f => f.efficiency_pct).filter(v => v != null);
-    const emissions = factories.map(f => f.emissions_gCO2_per_kWh).filter(v => v != null);
-    const outputs = factories.map(f => f.output_MWh).filter(v => v != null);
+    // Calculate cohort statistics (ignore missing values)
+    const efficiencies = factories.map(f => f.efficiency_pct).filter(v => v != null && !isNaN(v));
+    const emissions = factories.map(f => f.emissions_gCO2_per_kWh).filter(v => v != null && !isNaN(v));
+    const outputs = factories.map(f => f.output_MWh).filter(v => v != null && !isNaN(v));
 
     const getPercentile = (arr: number[], percentile: number): number => {
+      if (!arr.length) return 0;
       const sorted = [...arr].sort((a, b) => a - b);
       const index = (percentile / 100) * (sorted.length - 1);
       const lower = Math.floor(index);
@@ -44,11 +45,11 @@ export const FactoryComparisonBar: React.FC<FactoryComparisonBarProps> = ({ fact
     const emissionsP75 = getPercentile(emissions, 75);
     const maxOutput = Math.max(...outputs);
 
-    const efficiencyAvg = efficiencies.reduce((sum, v) => sum + v, 0) / efficiencies.length;
-    const emissionsAvg = emissions.reduce((sum, v) => sum + v, 0) / emissions.length;
+    const efficiencyAvg = efficiencies.length ? efficiencies.reduce((sum, v) => sum + v, 0) / efficiencies.length : 0;
+    const emissionsAvg = emissions.length ? emissions.reduce((sum, v) => sum + v, 0) / emissions.length : 0;
 
     return factories.map(factory => {
-      // Determine status
+      // Traffic light logic
       let status: 'green' | 'yellow' | 'red' = 'yellow';
       let statusEmoji = '🟡';
 
@@ -60,7 +61,7 @@ export const FactoryComparisonBar: React.FC<FactoryComparisonBarProps> = ({ fact
         statusEmoji = '🔴';
       }
 
-      // Generate recommendations
+      // Generate recommendations (max 2)
       const recommendations: string[] = [];
       const isEfficiencyBelowAvg = factory.efficiency_pct < efficiencyAvg;
       const isEmissionsAboveAvg = factory.emissions_gCO2_per_kWh > emissionsAvg;
@@ -129,14 +130,14 @@ export const FactoryComparisonBar: React.FC<FactoryComparisonBarProps> = ({ fact
         <h3 className="text-lg font-bold text-gray-900">Factory Comparison Bar</h3>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {sortedFactories.map((factory, index) => (
           <div key={index} className="border border-gray-200 rounded-lg p-4">
-            {/* Factory Header */}
+            {/* Title line: FactoryName [🟢/🟡/🔴] */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-3">
-                <span className="text-xl">{factory.statusEmoji}</span>
                 <h4 className="font-semibold text-gray-900">{factory.factory_name}</h4>
+                <span className="text-xl">{factory.statusEmoji}</span>
                 {factory.location && (
                   <span className="text-sm text-gray-500">({factory.location})</span>
                 )}
@@ -150,7 +151,7 @@ export const FactoryComparisonBar: React.FC<FactoryComparisonBarProps> = ({ fact
               </div>
             </div>
 
-            {/* Metrics Line */}
+            {/* Metrics line: Efficiency X% | Emissions Y gCO₂/kWh | Output Z MWh */}
             <div className="flex items-center space-x-6 text-sm text-gray-600 mb-4">
               <div className="flex items-center space-x-1">
                 <TrendingUp className="w-4 h-4 text-green-600" />
@@ -166,34 +167,34 @@ export const FactoryComparisonBar: React.FC<FactoryComparisonBarProps> = ({ fact
               </div>
             </div>
 
-            {/* Visual Bar */}
+            {/* Horizontal segmented bar (stacked left→right) */}
             <div className="mb-4">
-              <div className="flex h-6 rounded-lg overflow-hidden border border-gray-200">
-                {/* Efficiency Segment */}
+              <div className="flex h-8 rounded-lg overflow-hidden border border-gray-200">
+                {/* Efficiency segment (green scale, longer = better) */}
                 <div 
                   className="bg-gradient-to-r from-green-300 to-green-600 flex items-center justify-center text-xs font-medium text-white"
-                  style={{ width: `${Math.max(factory.efficiency_pct * 0.3, 5)}%` }}
+                  style={{ width: `${Math.max(factory.efficiency_pct * 0.4, 8)}%` }}
                   title={`Efficiency: ${factory.efficiency_pct.toFixed(1)}%`}
                 >
-                  {factory.efficiency_pct >= 20 && 'EFF'}
+                  {factory.efficiency_pct >= 15 && 'EFF'}
                 </div>
                 
-                {/* Emissions Intensity Segment */}
+                {/* Emissions segment (red scale, longer/darker = worse) */}
                 <div 
                   className="bg-gradient-to-r from-red-300 to-red-600 flex items-center justify-center text-xs font-medium text-white"
-                  style={{ width: `${Math.max((factory.emissions_gCO2_per_kWh / 1000) * 30, 5)}%` }}
+                  style={{ width: `${Math.max((factory.emissions_gCO2_per_kWh / 1200) * 40, 8)}%` }}
                   title={`Emissions: ${formatNumber(factory.emissions_gCO2_per_kWh)} gCO₂/kWh`}
                 >
-                  {factory.emissions_gCO2_per_kWh >= 200 && 'EMI'}
+                  {factory.emissions_gCO2_per_kWh >= 300 && 'EMI'}
                 </div>
                 
-                {/* Output Segment */}
+                {/* Output segment (blue scale, width proportional to output) */}
                 <div 
                   className="bg-gradient-to-r from-blue-300 to-blue-600 flex items-center justify-center text-xs font-medium text-white"
-                  style={{ width: `${Math.max(factory.normalizedOutput * 0.4, 5)}%` }}
+                  style={{ width: `${Math.max(factory.normalizedOutput * 0.3, 8)}%` }}
                   title={`Output: ${formatNumber(factory.output_MWh)} MWh`}
                 >
-                  {factory.normalizedOutput >= 25 && 'OUT'}
+                  {factory.normalizedOutput >= 30 && 'OUT'}
                 </div>
                 
                 {/* Remaining space */}
@@ -217,7 +218,7 @@ export const FactoryComparisonBar: React.FC<FactoryComparisonBarProps> = ({ fact
               </div>
             </div>
 
-            {/* Recommendations */}
+            {/* Recommendation bullets (1–2 lines) */}
             {factory.recommendations.length > 0 && (
               <div>
                 <h5 className="font-medium text-gray-900 mb-2">Recommendations:</h5>
