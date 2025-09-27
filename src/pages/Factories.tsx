@@ -1,6 +1,7 @@
 import React from 'react';
 import { FactoryComparisonBar } from '../components/FactoryComparisonBar';
 import { SatelliteHeatTracker } from '../components/SatelliteHeatTracker';
+import { RealTimeDataFeed } from '../components/RealTimeDataFeed';
 import { PlantStatusCard } from '../components/PlantStatusCard';
 import { useData } from '../hooks/useData';
 import { Factory, MapPin, Thermometer, Loader2, AlertCircle } from 'lucide-react';
@@ -170,6 +171,11 @@ export const Factories: React.FC = () => {
       {/* Factory Performance Comparison */}
       <div className="mb-8">
         <FactoryComparisonBar factories={factoryData} />
+      </div>
+
+      {/* Real-Time Data Feed */}
+      <div className="mb-8">
+        <RealTimeDataFeed factories={factoryData.map(f => f.factory_name)} />
       </div>
 
       {/* Satellite Heat Tracking */}
