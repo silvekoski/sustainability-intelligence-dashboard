@@ -225,24 +225,6 @@ export class AuthService {
   // Format error messages
   private static formatError(error: any): AuthError {
     if (error.message) {
-      // Handle specific Supabase error messages
-      if (error.message.includes('Invalid login credentials')) {
-        return { message: 'Invalid email or password', code: error.code };
-      }
-      if (error.message.includes('Email not confirmed')) {
-        return { message: 'Please check your email and click the confirmation link', code: 'email_not_confirmed' };
-      }
-      if (error.message.includes('User already registered')) {
-        return { message: 'An account with this email already exists', code: error.code };
-      }
-      if (error.message.includes('Password should be at least')) {
-        return { message: 'Password must be at least 6 characters long', code: error.code };
-      }
-      return { message: error.message, code: error.code };
-    }
-    return { message: 'An unexpected error occurred', code: error.code };
-  }
-
   // Validate password strength
   static validatePasswordStrength(password: string): { isValid: boolean; message?: string } {
     if (password.length < 8) {

@@ -11,7 +11,6 @@ interface AuthContextType extends AuthState {
   updatePassword: (currentPassword: string, newPassword: string, confirmPassword: string) => Promise<{ error: any }>;
   updateProfile: (data: { full_name: string; avatar_url?: string }) => Promise<{ error: any }>;
   deleteAccount: () => Promise<{ error: any }>;
-  resendConfirmation: (email: string) => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -177,11 +176,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return { error: result.error };
   };
 
-  const resendConfirmation = async (email: string) => {
-    const result = await AuthService.resendConfirmation(email);
-    return { error: result.error };
-  };
-
   const value: AuthContextType = {
     ...state,
     login,
@@ -191,7 +185,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     updatePassword,
     updateProfile,
     deleteAccount,
-    resendConfirmation,
   };
 
   return (
