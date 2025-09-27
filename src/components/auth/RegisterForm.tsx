@@ -31,12 +31,11 @@ export const RegisterForm: React.FC = () => {
     let strength = 0;
     if (password.length >= 8) strength++;
     if (/[a-z]/.test(password)) strength++;
-    if (/[A-Z]/.test(password)) strength++;
     if (/\d/.test(password)) strength++;
     if (/[^a-zA-Z\d]/.test(password)) strength++;
 
-    const labels = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
-    const colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-blue-500', 'bg-green-500'];
+    const labels = ['Very Weak', 'Weak', 'Good', 'Strong'];
+    const colors = ['bg-red-500', 'bg-orange-500', 'bg-blue-500', 'bg-green-500'];
     
     return {
       strength,
@@ -177,7 +176,7 @@ export const RegisterForm: React.FC = () => {
                     <div className="flex-1 bg-gray-200 rounded-full h-2">
                       <div
                         className={`h-2 rounded-full transition-all duration-300 ${passwordStrength.color}`}
-                        style={{ width: `${(passwordStrength.strength / 5) * 100}%` }}
+                        style={{ width: `${(passwordStrength.strength / 4) * 100}%` }}
                       />
                     </div>
                     <span className="text-xs text-gray-600">{passwordStrength.label}</span>

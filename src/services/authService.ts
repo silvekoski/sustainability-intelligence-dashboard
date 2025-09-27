@@ -257,9 +257,6 @@ export class AuthService {
     if (!/(?=.*[a-z])/.test(password)) {
       return { isValid: false, message: 'Password must contain at least one lowercase letter' };
     }
-    if (!/(?=.*[A-Z])/.test(password)) {
-      return { isValid: false, message: 'Password must contain at least one uppercase letter' };
-    }
     if (!/(?=.*\d)/.test(password)) {
       return { isValid: false, message: 'Password must contain at least one number' };
     }

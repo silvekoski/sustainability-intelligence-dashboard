@@ -25,8 +25,8 @@ export const registerSchema = yup.object({
     .string()
     .min(8, 'Password must be at least 8 characters')
     .matches(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+      /^(?=.*[a-z])(?=.*\d)/,
+      'Password must contain at least one lowercase letter and one number'
     )
     .required('Password is required'),
   confirmPassword: yup
@@ -50,8 +50,8 @@ export const updatePasswordSchema = yup.object({
     .string()
     .min(8, 'Password must be at least 8 characters')
     .matches(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+      /^(?=.*[a-z])(?=.*\d)/,
+      'Password must contain at least one lowercase letter and one number'
     )
     .required('New password is required'),
   confirmPassword: yup
