@@ -50,6 +50,17 @@ export interface ReportSection {
 export interface ComplianceReport {
   title: string;
   executiveSummary: string;
+  facilities: {
+    id: string;
+    name: string;
+    location: string;
+    sector: string;
+    totalEmissions: number;
+    verifiedEmissions: number;
+    allowancesAllocated: number;
+    allowancesSurrendered: number;
+    complianceStatus: 'compliant' | 'non_compliant' | 'pending';
+  }[];
   sections: ReportSection[];
   conclusion: string;
   generatedAt: string;
