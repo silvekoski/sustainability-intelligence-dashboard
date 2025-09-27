@@ -109,20 +109,6 @@ const executiveSummary = `This report presents compliance status with ${
 yPosition = addWrappedText(executiveSummary, margin, yPosition, contentWidth, 11);
 yPosition += 15;
 
-// Aggregated Data (safe defaults)
-if (report.aggregatedData) {
-  const aggregatedText = `Total CO2 Emissions: ${report.aggregatedData.totalCO2Emissions?.toLocaleString() ?? 0} tonnes
-Total CH4 Emissions: ${report.aggregatedData.totalCH4Emissions ?? 0} tonnes
-Total N2O Emissions: ${report.aggregatedData.totalN2OEmissions ?? 0} tonnes
-Total GHG Emissions: ${report.aggregatedData.totalGHGEmissions?.toLocaleString() ?? 0} tonnes CO2 equivalent
-Energy Consumption: ${report.aggregatedData.energyConsumption?.toLocaleString() ?? 0} MWh
-Renewable Energy Share: ${report.aggregatedData.renewableEnergyShare ?? 0}%`;
-
-  yPosition = addWrappedText(aggregatedText, margin, yPosition, contentWidth, 11);
-  yPosition += 15;
-}
-
-
       const aggregatedText = `Total CO2 Emissions: ${report.aggregatedData.totalCO2Emissions.toLocaleString()} tonnes
 Total CH4 Emissions: ${report.aggregatedData.totalCH4Emissions} tonnes
 Total N2O Emissions: ${report.aggregatedData.totalN2OEmissions} tonnes

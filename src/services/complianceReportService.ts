@@ -334,6 +334,7 @@ export class ComplianceReportService {
       executiveSummary: this.generateExecutiveSummary(data),
       reportingPeriod: data.reportingPeriod,
       facilities: data.facilities,
+      aggregatedData: data.aggregatedData,
       sections,
       conclusion: this.generateConclusion(data),
       generatedAt: new Date().toISOString(),

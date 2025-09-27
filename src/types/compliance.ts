@@ -23,6 +23,14 @@ export interface ComplianceReportData {
     energyConsumption: number;
     renewableEnergyShare: number;
   };
+  aggregatedData: {
+    totalCO2Emissions: number;
+    totalCH4Emissions: number;
+    totalN2OEmissions: number;
+    totalGHGEmissions: number;
+    energyConsumption: number;
+    renewableEnergyShare: number;
+  };
   csrdCompliance: {
     doubleMateriality: boolean;
     esrsStandards: string[];
