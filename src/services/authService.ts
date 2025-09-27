@@ -25,18 +25,7 @@ export class AuthService {
 
       if (error) throw error;
 
-      // Create user profile
-      if (data.user) {
-        try {
-          await this.createUserProfile(data.user.id, {
-            email: credentials.email,
-            full_name: credentials.fullName,
-          });
-        } catch (profileError) {
-          console.error('Profile creation error:', profileError);
-          // Don't fail registration if profile creation fails
-        }
-      }
+      // Profile will be created automatically by the handle_new_user trigger
 
       return { data, error: null };
     } catch (error: any) {
