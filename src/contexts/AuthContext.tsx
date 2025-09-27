@@ -169,18 +169,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Force initialization after 10 seconds if still loading
   useEffect(() => {
     if (state.loading && !state.initialized) {
-      const forceInit = setTimeout(() => {
-        console.warn('Forcing auth initialization due to timeout');
-        setState(prev => ({
-          ...prev,
-          loading: false,
-          initialized: true,
-        }));
+      const timer = setTimeout(() => {
+        // Only force init if STILL no session and no user
+        if (!state.user) {
+          console.warn('[auth] Forcing auth initialization due to timeout');
+          setState(prev => ({
+            ...prev,
+            loading: false,
+            initialized: true,
+          }));
+        }
       }, 10000);
 
-      return () => clearTimeout(forceInit);
+      return () => clearTimeout(timer);
     }
-  }, [state.loading, state.initialized]);
+  }, [state.loading, state.initialized, state.user]);
 
   const login = async (email: string, password: string) => {
     setState(prev => ({ ...prev, loading: true }));
