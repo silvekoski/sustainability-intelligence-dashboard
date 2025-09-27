@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { FileText, Download, Loader2, CheckCircle, AlertCircle, FileDown } from 'lucide-react';
+import { FileText, Download, Loader2, CheckCircle, AlertCircle, FileDown, Globe, Database, Shield } from 'lucide-react';
 import { ComplianceReportService } from '../services/complianceReportService';
 import { ComplianceReport } from '../types/compliance';
 import jsPDF from 'jspdf';
 
 export const ComplianceReportGenerator: React.FC = () => {
   const [report, setReport] = useState<ComplianceReport | null>(null);
+  const [jurisdiction, setJurisdiction] = useState<'EU' | 'US' | 'COMBINED'>('COMBINED');
   const [loading, setLoading] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [exportingData, setExportingData] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const generateReport = async () => {
@@ -15,7 +17,7 @@ export const ComplianceReportGenerator: React.FC = () => {
     setError(null);
     
     try {
-      const generatedReport = await ComplianceReportService.generateComplianceReport();
+      const generatedReport = await ComplianceReportService.generateComplianceReport(jurisdiction);
       setReport(generatedReport);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate report');
@@ -180,6 +182,31 @@ export const ComplianceReportGenerator: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const exportData = async (format: 'JSON' | 'CSV' | 'XML') => {
+    setExportingData(true);
+    
+    try {
+      const data = await ComplianceReportService.exportData(format, 'internal');
+      const blob = new Blob([data], { 
+        type: format === 'JSON' ? 'application/json' : 
+             format === 'CSV' ? 'text/csv' : 'application/xml' 
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `compliance_data_${new Date().toISOString().split('T')[0]}.${format.toLowerCase()}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export error:', error);
+      setError('Failed to export data');
+    } finally {
+      setExportingData(false);
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-6">
@@ -188,12 +215,26 @@ export const ComplianceReportGenerator: React.FC = () => {
             <FileText className="w-6 h-6 text-blue-600" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">EU Compliance Report Generator</h3>
-            <p className="text-sm text-gray-600">Generate formal regulatory compliance reports</p>
+            <h3 className="text-lg font-semibold text-gray-900">Multi-Jurisdictional Compliance Report Generator</h3>
+            <p className="text-sm text-gray-600">Generate formal regulatory compliance reports for EU and US standards</p>
           </div>
         </div>
         
         <div className="flex items-center space-x-3">
+          {/* Jurisdiction Selector */}
+          <div className="flex items-center space-x-2">
+            <Globe className="w-4 h-4 text-gray-500" />
+            <select
+              value={jurisdiction}
+              onChange={(e) => setJurisdiction(e.target.value as 'EU' | 'US' | 'COMBINED')}
+              className="text-sm border border-gray-300 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="EU">EU Only</option>
+              <option value="US">US Only</option>
+              <option value="COMBINED">EU + US</option>
+            </select>
+          </div>
+          
           {!report && (
             <button
               onClick={generateReport}
@@ -215,23 +256,66 @@ export const ComplianceReportGenerator: React.FC = () => {
           )}
           
           {report && (
-            <button
-              onClick={downloadPDF}
-              disabled={downloadingPdf}
-              className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {downloadingPdf ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Generating PDF...</span>
-                </>
-              ) : (
-                <>
-                  <FileDown className="w-4 h-4" />
-                  <span>Download PDF</span>
-                </>
-              )}
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={downloadPDF}
+                disabled={downloadingPdf}
+                className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {downloadingPdf ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Generating PDF...</span>
+                  </>
+                ) : (
+                  <>
+                    <FileDown className="w-4 h-4" />
+                    <span>Download PDF</span>
+                  </>
+                )}
+              </button>
+              
+              {/* Data Export Dropdown */}
+              <div className="relative group">
+                <button
+                  disabled={exportingData}
+                  className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {exportingData ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Exporting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Database className="w-4 h-4" />
+                      <span>Export Data</span>
+                    </>
+                  )}
+                </button>
+                
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                  <button
+                    onClick={() => exportData('JSON')}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    Export as JSON
+                  </button>
+                  <button
+                    onClick={() => exportData('CSV')}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    Export as CSV
+                  </button>
+                  <button
+                    onClick={() => exportData('XML')}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    Export as XML
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -250,8 +334,35 @@ export const ComplianceReportGenerator: React.FC = () => {
             <div>
               <p className="text-sm font-medium text-green-900">Report Generated Successfully</p>
               <p className="text-xs text-green-700">
-                Generated on {new Date(report.generatedAt).toLocaleString()}
+                Generated on {new Date(report.generatedAt).toLocaleString()} | {report.jurisdiction} | {report.framework.join(', ')}
               </p>
+            </div>
+          </div>
+
+          {/* Compliance Framework Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <Globe className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-900">Jurisdiction</span>
+              </div>
+              <p className="text-lg font-bold text-blue-800">{report.jurisdiction}</p>
+            </div>
+            
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <Shield className="w-4 h-4 text-green-600" />
+                <span className="text-sm font-medium text-green-900">Frameworks</span>
+              </div>
+              <p className="text-lg font-bold text-green-800">{report.framework.length}</p>
+            </div>
+            
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <Database className="w-4 h-4 text-purple-600" />
+                <span className="text-sm font-medium text-purple-900">Data Act</span>
+              </div>
+              <p className="text-lg font-bold text-purple-800">Compliant</p>
             </div>
           </div>
 

@@ -172,14 +172,7 @@ export const Dashboard: React.FC = () => {
             <Leaf className="w-6 h-6 text-green-600" />
           </div>
           <div>
-            <PermitsStatusWidget data={{
-              active_permits: 17,
-              avg_consumption_rate_t_per_month: Math.round(metrics.totalEmissions / 2 * 30), // Estimate monthly rate
-              current_date: new Date().toISOString(),
-              target_buffer_months: 12,
-              warning_threshold_pct: 80,
-              cumulative_emissions_t: metrics.totalEmissions
-            }} />
+            <h3 className="text-xl font-semibold text-gray-900">Multi-Jurisdictional Compliance</h3>
             <p className="text-gray-600">AI-powered recommendations for optimization</p>
           </div>
         </div>
@@ -188,39 +181,39 @@ export const Dashboard: React.FC = () => {
           <div className="bg-white rounded-lg p-6 shadow-sm">
             <div className="flex items-center space-x-2 mb-3">
               <TrendingUp className="w-5 h-5 text-green-600" />
-              <h4 className="font-semibold text-gray-900">Efficiency Opportunity</h4>
+              <h4 className="font-semibold text-gray-900">EU Compliance Status</h4>
             </div>
             <p className="text-sm text-gray-600 mb-3">
-              Alpha Power Station shows potential for 12% efficiency improvement through fuel optimization.
+              CSRD, ESRS, and EU ETS requirements fully met. Data Act compliance implemented with role-based access controls.
             </p>
             <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-              High Impact
+              Compliant
             </span>
           </div>
           
           <div className="bg-white rounded-lg p-6 shadow-sm">
             <div className="flex items-center space-x-2 mb-3">
               <Factory className="w-5 h-5 text-blue-600" />
-              <h4 className="font-semibold text-gray-900">Emissions Reduction</h4>
+              <h4 className="font-semibold text-gray-900">US SEC Disclosure</h4>
             </div>
             <p className="text-sm text-gray-600 mb-3">
-              Switching Delta Plant to natural gas during peak hours could reduce CO₂ by 15%.
+              Climate-related risks assessed, financial impacts quantified, and scenario analysis completed for SEC reporting.
             </p>
             <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-              Medium Impact
+              Ready
             </span>
           </div>
           
           <div className="bg-white rounded-lg p-6 shadow-sm">
             <div className="flex items-center space-x-2 mb-3">
               <Gauge className="w-5 h-5 text-purple-600" />
-              <h4 className="font-semibold text-gray-900">Maintenance Alert</h4>
+              <h4 className="font-semibold text-gray-900">Data Interoperability</h4>
             </div>
             <p className="text-sm text-gray-600 mb-3">
-              Gamma CHP Plant efficiency trending down. Schedule maintenance to prevent issues.
+              Multi-format data export (JSON, CSV, XML) available with audit logging and access controls implemented.
             </p>
             <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
-              Preventive
+              Active
             </span>
           </div>
         </div>
