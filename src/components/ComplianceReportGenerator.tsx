@@ -266,7 +266,7 @@ Data Act Compliance: Data interoperability and portability implemented`;
       }
 
       // Save PDF
-      const fileName = `${(jurisdiction ?? 'combined').toLowerCase()}_compliance_report_${new Date().toISOString().split('T')[0]}.pdf`;
+      const fileName = `${String(jurisdiction ?? 'combined').toLowerCase()}_compliance_report_${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(fileName);
     } catch (error) {
       console.error('Error generating report:', error);
