@@ -102,7 +102,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         console.log('Auth state change:', event, !!session?.user);
 
-        if (event === 'SIGNED_IN' && session?.user) {
+        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
           setState(prev => ({ ...prev, loading: true }));
           
           // Fetch user profile
@@ -112,7 +112,114 @@ export function AuthProvider({ children }: AuthProviderProps) {
               .from('profiles')
               .select('*')
               .eq('id', session.user.id)
-              .maybeSingle();
+              .single();
+            profile = data;
+          } catch (error: any) {
+            console.warn('Profile fetch failed, creating profile:', error);
+            // If profile doesn't exist, create it
+            if (error.code === 'PGRST116') {
+              try {
+                const { data: newProfile } = await supabase
+                  .from('profiles')
+                  .insert({
+                    id: session.user.id,
+                    email: session.user.email || '',
+                    full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '',
+                    avatar_url: session.user.user_metadata?.avatar_url || null,
+                  })
+                  .select()
+                  .single();
+                profile = newProfile;
+              } catch (insertError) {
+                console.error('Failed to create profile:', insertError);
+              }
+            }
+          }
+
+          if (mounted) {
+            setState({
+              user: session.user as AuthUser,
+              profile,
+              loading: false,
+              initialized: true,
+            });
+          }
+        } else if (event === 'SIGNED_OUT') {
+          if (mounted) {
+            setState({
+              user: null,
+              profile: null,
+              loading: false,
+              initialized: true,
+            });
+          }
+        }
+      }
+    );
+
+    return () => {
+      mounted = false;
+      clearTimeout(timer);
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  // Force initialization after 10 seconds if still loading
+  useEffect(() => {
+    if (state.loading && !state.initialized) {
+      const forceInit = setTimeout(() => {
+        console.warn('Forcing auth initialization due to timeout');
+        setState(prev => ({
+          ...prev,
+          loading: false,
+          initialized: true,
+        }));
+      }, 10000);
+
+      return () => clearTimeout(forceInit);
+    }
+  }, [state.loading, state.initialized]);
+
+  const login = async (email: string, password: string) => {
+    setState(prev => ({ ...prev, loading: true }));
+    
+    try {
+      const result = await AuthService.login({ email, password });
+      
+      if (result.error) {
+        setState(prev => ({ ...prev, loading: false }));
+      }
+      // Don't set loading to false here - let the auth state change handler do it
+      
+      return { error: result.error };
+    } catch (error) {
+      setState(prev => ({ ...prev, loading: false }));
+      return { error: { message: 'Login failed' } };
+    }
+  };
+
+  const register = async (email: string, password: string, confirmPassword: string, fullName: string) => {
+    setState(prev => ({ ...prev, loading: true }));
+    
+    try {
+      const result = await AuthService.register({ 
+        email, 
+        password, 
+        confirmPassword, 
+        fullName 
+      });
+      
+      if (result.error) {
+        setState(prev => ({ ...prev, loading: false }));
+      }
+      // Don't set loading to false here - let the auth state change handler do it
+      
+      return { error: result.error };
+    } catch (error) {
+      setState(prev => ({ ...prev, loading: false }));
+      return { error: { message: 'Registration failed' } };
+    }
+  };
             profile = data;
           } catch (error) {
             console.warn('Profile fetch failed:', error);
