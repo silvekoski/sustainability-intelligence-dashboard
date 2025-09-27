@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { User, Mail, Calendar, Loader2, AlertCircle, CheckCircle, Trash2, Lock } from 'lucide-react';
+import { User, Mail, Calendar, Loader2, AlertCircle, CheckCircle, Trash2, Lock, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useOrganization } from '../../contexts/OrganizationContext';
 import { profileSchema, updatePasswordSchema } from '../../utils/validation';
 import { UpdateProfileData, UpdatePasswordCredentials } from '../../types/auth';
 
@@ -13,8 +14,17 @@ export const ProfileSettings: React.FC = () => {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   
   const { user, profile, updateProfile, updatePassword, deleteAccount, logout, loading } = useAuth();
+  const { currentOrganization, refreshData } = useOrganization();
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('ProfileSettings - User:', user);
+    console.log('ProfileSettings - Profile:', profile);
+    console.log('ProfileSettings - Current Organization:', currentOrganization);
+  }, [user, profile, currentOrganization]);
 
   const profileForm = useForm<UpdateProfileData>({
     resolver: yupResolver(profileSchema),
@@ -24,9 +34,30 @@ export const ProfileSettings: React.FC = () => {
     },
   });
 
+  // Update form when profile data changes
+  React.useEffect(() => {
+    if (profile) {
+      profileForm.reset({
+        full_name: profile.full_name || '',
+        avatar_url: profile.avatar_url || '',
+      });
+    }
+  }, [profile, profileForm]);
+
   const passwordForm = useForm<UpdatePasswordCredentials>({
     resolver: yupResolver(updatePasswordSchema),
   });
+
+  const handleRefreshData = async () => {
+    setRefreshing(true);
+    try {
+      await refreshData();
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const onProfileSubmit = async (data: UpdateProfileData) => {
     setProfileError(null);
@@ -81,8 +112,20 @@ export const ProfileSettings: React.FC = () => {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-900">Account Settings</h1>
-          <p className="text-gray-600 mt-1">Manage your account preferences and security settings</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Account Settings</h1>
+              <p className="text-gray-600 mt-1">Manage your account preferences and security settings</p>
+            </div>
+            <button
+              onClick={handleRefreshData}
+              disabled={refreshing}
+              className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
+            </button>
+          </div>
         </div>
 
         <div className="flex">
@@ -113,6 +156,20 @@ export const ProfileSettings: React.FC = () => {
           <div className="flex-1 p-6">
             {activeTab === 'profile' && (
               <div className="space-y-6">
+                {/* Debug Information */}
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-xs">
+                    <h4 className="font-semibold text-gray-900 mb-2">Debug Info:</h4>
+                    <div className="space-y-1 text-gray-600">
+                      <div>User ID: {user?.id || 'Not loaded'}</div>
+                      <div>User Email: {user?.email || 'Not loaded'}</div>
+                      <div>Profile ID: {profile?.id || 'Not loaded'}</div>
+                      <div>Profile Name: {profile?.full_name || 'Not loaded'}</div>
+                      <div>Organization: {currentOrganization?.name || 'Not loaded'}</div>
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900 mb-4">Profile Information</h2>
                   
@@ -141,7 +198,7 @@ export const ProfileSettings: React.FC = () => {
                         </div>
                         <input
                           type="email"
-                          value={user?.email || ''}
+                          value={user?.email || 'Loading...'}
                           disabled
                           className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
                         />
@@ -159,7 +216,7 @@ export const ProfileSettings: React.FC = () => {
                         className={`block w-full px-3 py-3 border rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${
                           profileForm.formState.errors.full_name ? 'border-red-300' : 'border-gray-300'
                         }`}
-                        placeholder="Enter your full name"
+                        placeholder={profile ? "Enter your full name" : "Loading..."}
                       />
                       {profileForm.formState.errors.full_name && (
                         <p className="mt-1 text-sm text-red-600">
@@ -189,6 +246,28 @@ export const ProfileSettings: React.FC = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Current Organization
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <User className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                          type="text"
+                          value={currentOrganization?.name || 'No organization'}
+                          disabled
+                          className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
+                        />
+                      </div>
+                      {currentOrganization && (
+                        <p className="mt-1 text-xs text-gray-500">
+                          Organization ID: @{currentOrganization.slug}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
                         Member Since
                       </label>
                       <div className="relative">
@@ -197,16 +276,30 @@ export const ProfileSettings: React.FC = () => {
                         </div>
                         <input
                           type="text"
-                          value={profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : ''}
+                          value={profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : 'Loading...'}
                           disabled
                           className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
                         />
                       </div>
                     </div>
 
+                    {/* Show loading state if profile is not loaded */}
+                    {!profile && !loading && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <div className="flex items-center space-x-3">
+                          <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm text-yellow-800">
+                              Profile information is not loading properly. Try refreshing the page or clicking the refresh button above.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <button
                       type="submit"
-                      disabled={profileForm.formState.isSubmitting || loading}
+                      disabled={profileForm.formState.isSubmitting || loading || !profile}
                       className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       {profileForm.formState.isSubmitting || loading ? (
