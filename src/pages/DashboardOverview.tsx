@@ -11,7 +11,10 @@ import {
   AlertCircle,
   TrendingUp,
   Leaf,
-  Upload
+  Upload,
+  BarChart3,
+  Shield,
+  FileText
 } from 'lucide-react';
 
 export const DashboardOverview: React.FC = () => {
