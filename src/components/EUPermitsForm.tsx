@@ -147,7 +147,8 @@ export const EUPermitsForm: React.FC = () => {
                 <input
                   {...register('active_permits', {
                     required: 'Active permits count is required',
-                    min: { value: 0, message: 'Must be a non-negative number' }
+                   min: { value: 0, message: 'Must be a non-negative number' },
+                   valueAsNumber: true
                   })}
                   type="number"
                   min="0"
