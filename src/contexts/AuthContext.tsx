@@ -75,33 +75,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const handleUserSession = async (user: AuthUser) => {
-    setState(prev => ({ ...prev, user, loading: true }));
-    
-    // Fetch user profile - handle case where profile doesn't exist yet
-    const { data: profile, error } = await AuthService.getUserProfile(user.id);
-    
-    // If no profile exists, create one
-    if (!profile && !error) {
-      const { data: newProfile } = await AuthService.createUserProfile(user.id, {
-        email: user.email || '',
-        full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || '',
-      });
+    try {
+      setState(prev => ({ ...prev, user, loading: true }));
+      
+      // Fetch user profile - handle case where profile doesn't exist yet
+      const { data: profile, error } = await AuthService.getUserProfile(user.id);
+      
+      // If no profile exists, create one
+      if (!profile && !error) {
+        const { data: newProfile } = await AuthService.createUserProfile(user.id, {
+          email: user.email || '',
+          full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || '',
+        });
+        
+        setState({
+          user,
+          profile: newProfile,
+          loading: false,
+          initialized: true,
+        });
+        return;
+      }
       
       setState({
         user,
-        profile: newProfile,
+        profile,
         loading: false,
         initialized: true,
       });
-      return;
+    } catch (error) {
+      console.error('Error handling user session:', error);
+      setState({
+        user,
+        profile: null,
+        loading: false,
+        initialized: true,
+      });
     }
-    
-    setState({
-      user,
-      profile,
-      loading: false,
-      initialized: true,
-    });
   };
 
   const login = async (email: string, password: string) => {
