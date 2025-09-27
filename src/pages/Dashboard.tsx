@@ -3,6 +3,7 @@ import { MetricCard } from '../components/MetricCard';
 import { PlantStatusCard } from '../components/PlantStatusCard';
 import { EmissionsChart } from '../components/EmissionsChart';
 import { EfficiencyGauge } from '../components/EfficiencyGauge';
+import { FactoryComparisonPanel } from '../components/FactoryComparisonPanel';
 import { useData } from '../hooks/useData';
 import { 
   Zap, 
@@ -136,6 +137,11 @@ export const Dashboard: React.FC = () => {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Factory Comparison & Compliance Panel */}
+      <div className="mb-8">
+        <FactoryComparisonPanel />
       </div>
 
       {/* Sustainability Insights */}
