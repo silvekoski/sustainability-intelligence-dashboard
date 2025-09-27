@@ -165,9 +165,12 @@ export const FactoryComparisonPanel: React.FC = () => {
     const loadData = async () => {
       try {
         setLoading(true);
+        setError(null);
         const comparisonData = await FactoryService.getFactoryComparisonData();
+        console.log('Factory comparison data loaded:', comparisonData);
         setData(comparisonData);
       } catch (err) {
+        console.error('Error loading factory data:', err);
         setError(err instanceof Error ? err.message : 'Failed to load factory data');
       } finally {
         setLoading(false);
@@ -199,6 +202,12 @@ export const FactoryComparisonPanel: React.FC = () => {
           <XCircle className="w-8 h-8 mx-auto mb-2" />
           <p>Failed to load factory comparison data</p>
           {error && <p className="text-sm text-gray-500 mt-1">{error}</p>}
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );

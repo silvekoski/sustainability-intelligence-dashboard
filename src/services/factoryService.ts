@@ -6,14 +6,17 @@ export class FactoryService {
   // Fetch factory data from Supabase
   static async getFactoryData(): Promise<FactoryData[]> {
     try {
-      // Load data from CSV file
-      const response = await fetch('/sample_data.csv');
+      // Load data from CSV file - try sample_data-2.csv first, then fallback
+      let response = await fetch('/sample_data-2.csv');
+      if (!response.ok) {
+        response = await fetch('/sample_data.csv');
+      }
       if (!response.ok) {
         throw new Error('Failed to load CSV data');
       }
       
       const csvText = await response.text();
-      const parsedData = parseCSVData(csvText);
+      const parsedData = this.parseCSVData(csvText);
       
       // Group data by plant and calculate aggregated metrics
       const plantGroups = parsedData.reduce((acc, record) => {
@@ -53,6 +56,31 @@ export class FactoryService {
       console.error('Error fetching factory data:', error);
       return [];
     }
+  }
+
+  // Add CSV parsing method to FactoryService
+  private static parseCSVData(csvText: string): any[] {
+    const lines = csvText.trim().split('\n');
+    if (lines.length < 2) return [];
+    
+    const headers = lines[0].split(',');
+    
+    return lines.slice(1).map(line => {
+      const values = line.split(',');
+      return {
+        date: values[0] || '',
+        plant_id: parseInt(values[1]) || 0,
+        plant_name: values[2] || '',
+        fuel_type: values[3] || '',
+        electricity_output_MWh: parseFloat(values[4]) || 0,
+        heat_output_MWh: parseFloat(values[5]) || 0,
+        fuel_consumption_MWh: parseFloat(values[6]) || 0,
+        CO2_emissions_tonnes: parseFloat(values[7]) || 0,
+        CH4_emissions_kg: parseFloat(values[8]) || 0,
+        N2O_emissions_kg: parseFloat(values[9]) || 0,
+        efficiency_percent: parseFloat(values[10]) || 0
+      };
+    });
   }
 
   // Calculate benchmarks from factory data
