@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
   requireAuth?: boolean;
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
+return <>{children}</>;
   children, 
   requireAuth = true 
 }) => {
