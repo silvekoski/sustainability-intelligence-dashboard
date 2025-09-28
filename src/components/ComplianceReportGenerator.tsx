@@ -125,13 +125,13 @@ export const ComplianceReportGenerator: React.FC<ComplianceReportGeneratorProps>
         
         await new Promise((resolve, reject) => {
           img.onload = () => {
-            canvas.width = 120; // Logo width
-            canvas.height = 40;  // Logo height
-            ctx?.drawImage(img, 0, 0, 120, 40);
+            canvas.width = 200; // Logo width
+            canvas.height = 60;  // Logo height
+            ctx?.drawImage(img, 0, 0, 200, 60);
             
             // Add logo to PDF
             const imgData = canvas.toDataURL('image/png');
-            pdf.addImage(imgData, 'PNG', margin, yPosition, 30, 10);
+            pdf.addImage(imgData, 'PNG', margin, yPosition, 50, 15);
             
             URL.revokeObjectURL(url);
             resolve(true);
@@ -140,7 +140,7 @@ export const ComplianceReportGenerator: React.FC<ComplianceReportGeneratorProps>
           img.src = url;
         });
         
-        yPosition += 20;
+        yPosition += 25;
       } catch (error) {
         console.warn('Could not load SVG logo, using text fallback:', error);
         // Fallback to text logo
@@ -149,7 +149,7 @@ export const ComplianceReportGenerator: React.FC<ComplianceReportGeneratorProps>
         pdf.setTextColor(34, 197, 94); // Green color
         pdf.text('ESBoost', margin, yPosition);
         pdf.setTextColor(0, 0, 0); // Reset to black
-        yPosition += 15;
+        yPosition += 20;
       }
 
       // Title
