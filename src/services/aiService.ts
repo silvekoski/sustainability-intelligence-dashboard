@@ -38,60 +38,6 @@ export class AIService {
   private static cache = new Map<string, { data: any; timestamp: number }>();
   private static pendingRequests = new Map<string, Promise<any>>();
 
-  // Generate cache key from data
-  private static generateCacheKey(data: PowerPlantData[], operation: string, jurisdiction?: string): string {
-    const dataHash = JSON.stringify({
-      length: data.length,
-      totalEmissions: data.reduce((sum, d) => sum + d.CO2_emissions_tonnes, 0),
-      totalOutput: data.reduce((sum, d) => sum + d.electricity_output_MWh, 0),
-      operation,
-      jurisdiction
-    });
-    return btoa(dataHash).slice(0, 32); // Short hash
-  }
-
-  // Check if cache entry is valid
-  private static isCacheValid(timestamp: number): boolean {
-    return Date.now() - timestamp < this.CACHE_DURATION;
-  }
-
-  // Get from cache or execute function
-  private static async getCachedOrExecute<T>(
-    cacheKey: string,
-    operation: () => Promise<T>
-  ): Promise<T> {
-    // Check cache first
-    const cached = this.cache.get(cacheKey);
-    if (cached && this.isCacheValid(cached.timestamp)) {
-      console.log(`AI Cache hit for key: ${cacheKey}`);
-      return cached.data;
-    }
-
-    // Check if request is already pending
-    const pending = this.pendingRequests.get(cacheKey);
-    if (pending) {
-      console.log(`AI Request already pending for key: ${cacheKey}`);
-      return pending;
-    }
-
-    // Execute new request
-    const promise = operation();
-    this.pendingRequests.set(cacheKey, promise);
-
-    try {
-      const result = await promise;
-      // Cache the result
-      this.cache.set(cacheKey, {
-        data: result,
-        timestamp: Date.now()
-      });
-      return result;
-    } finally {
-      // Remove from pending requests
-      this.pendingRequests.delete(cacheKey);
-    }
-  }
-
   private static async retry<T>(
     operation: () => Promise<T>,
     maxRetries: number = this.MAX_RETRIES
@@ -246,16 +192,19 @@ Return 5-7 specific, actionable compliance recommendations as a JSON array of st
   }
 
   static async optimizePlantPerformance(plantData: PowerPlantData[]): Promise<string[]> {
-    try {
-      const plantAnalysis = plantData.map(plant => ({
-        name: plant.plant_name,
-        fuel: plant.fuel_type,
-        efficiency: plant.efficiency_percent,
-        emissions: plant.CO2_emissions_tonnes,
-        output: plant.electricity_output_MWh
-      }));
+    const cacheKey = this.generateCacheKey(plantData, 'optimize');
+    
+    return this.getCachedOrExecute(cacheKey, async () => {
+      try {
+        const plantAnalysis = plantData.map(plant => ({
+          name: plant.plant_name,
+          fuel: plant.fuel_type,
+          efficiency: plant.efficiency_percent,
+          emissions: plant.CO2_emissions_tonnes,
+          output: plant.electricity_output_MWh
+        }));
 
-      const prompt = `Analyze these power plant performance metrics and provide optimization recommendations:
+        const prompt = `Analyze these power plant performance metrics and provide optimization recommendations:
 
 ${JSON.stringify(plantAnalysis, null, 2)}
 
@@ -268,37 +217,38 @@ Focus on:
 
 Provide 5-8 specific, actionable optimization recommendations as a JSON array of strings.`;
 
-      const completion = await this.retry(() => client.chat.completions.create({
-        model: this.MODEL,
-        messages: [
-          {
-            role: "system",
-            content: "You are a power plant optimization expert with deep knowledge of thermal efficiency, emissions control, and operational best practices."
+        const completion = await this.retry(() => client.chat.completions.create({
+          model: this.MODEL,
+          messages: [
+            {
+              role: "system",
+              content: "You are a power plant optimization expert with deep knowledge of thermal efficiency, emissions control, and operational best practices."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          extra_headers: {
+            "HTTP-Referer": this.SITE_URL,
+            "X-Title": this.SITE_NAME,
           },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        extra_headers: {
-          "HTTP-Referer": this.SITE_URL,
-          "X-Title": this.SITE_NAME,
-        },
-        temperature: 0.6,
-        max_tokens: 1200
-      }));
+          temperature: 0.6,
+          max_tokens: 1200
+        }));
 
-      const response = completion.choices[0]?.message?.content;
-      if (!response) {
-        throw new Error('No response from AI service');
+        const response = completion.choices[0]?.message?.content;
+        if (!response) {
+          throw new Error('No response from AI service');
+        }
+
+        return JSON.parse(response) as string[];
+
+      } catch (error) {
+        console.error('AI Optimization Error:', error);
+        return this.getFallbackOptimizationRecommendations();
       }
-
-      return JSON.parse(response) as string[];
-
-    } catch (error) {
-      console.error('AI Optimization Error:', error);
-      return this.getFallbackOptimizationRecommendations();
-    }
+    });
   }
 
   static async predictEmissionsTrends(data: PowerPlantData[]): Promise<{
