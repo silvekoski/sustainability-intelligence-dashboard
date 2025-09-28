@@ -11,14 +11,24 @@ export const AIComplianceAssistant: React.FC<AIComplianceAssistantProps> = ({ da
   const [insights, setInsights] = useState<string[]>([]);
   const [jurisdiction, setJurisdiction] = useState<'EU' | 'US' | 'COMBINED'>('COMBINED');
   const [loading, setLoading] = useState(false);
+  const [lastAnalyzedData, setLastAnalyzedData] = useState<PowerPlantData[] | null>(null);
+  const [lastJurisdiction, setLastJurisdiction] = useState<'EU' | 'US' | 'COMBINED'>('COMBINED');
 
   const generateInsights = async () => {
     if (!data || data.length === 0) return;
+    
+    // Don't re-analyze the same data and jurisdiction
+    if (lastAnalyzedData && lastJurisdiction === jurisdiction && 
+        JSON.stringify(lastAnalyzedData) === JSON.stringify(data)) {
+      return;
+    }
 
     setLoading(true);
     try {
       const complianceInsights = await AIService.generateComplianceInsights(data, jurisdiction);
       setInsights(complianceInsights);
+      setLastAnalyzedData(data);
+      setLastJurisdiction(jurisdiction);
     } catch (error) {
       console.error('Compliance insights error:', error);
     } finally {

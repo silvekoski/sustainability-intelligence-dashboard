@@ -11,9 +11,15 @@ export const AIOptimizationWidget: React.FC<AIOptimizationWidgetProps> = ({ data
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const [prediction, setPrediction] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [lastOptimizedData, setLastOptimizedData] = useState<PowerPlantData[] | null>(null);
 
   const generateOptimizations = async () => {
     if (!data || data.length === 0) return;
+    
+    // Don't re-optimize the same data
+    if (lastOptimizedData && JSON.stringify(lastOptimizedData) === JSON.stringify(data)) {
+      return;
+    }
 
     setLoading(true);
     try {
@@ -24,6 +30,7 @@ export const AIOptimizationWidget: React.FC<AIOptimizationWidgetProps> = ({ data
       
       setRecommendations(optimizations);
       setPrediction(emissionsPrediction);
+      setLastOptimizedData(data);
     } catch (error) {
       console.error('Optimization error:', error);
     } finally {

@@ -11,9 +11,15 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ data }) => {
   const [analysis, setAnalysis] = useState<AIAnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastAnalyzedData, setLastAnalyzedData] = useState<PowerPlantData[] | null>(null);
 
   const analyzeData = async () => {
     if (!data || data.length === 0) return;
+    
+    // Don't re-analyze the same data
+    if (lastAnalyzedData && JSON.stringify(lastAnalyzedData) === JSON.stringify(data)) {
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -21,6 +27,7 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ data }) => {
     try {
       const result = await AIService.analyzeEmissionsData(data);
       setAnalysis(result);
+      setLastAnalyzedData(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to analyze data');
     } finally {

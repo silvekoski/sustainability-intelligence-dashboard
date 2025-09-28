@@ -192,19 +192,16 @@ Return 5-7 specific, actionable compliance recommendations as a JSON array of st
   }
 
   static async optimizePlantPerformance(plantData: PowerPlantData[]): Promise<string[]> {
-    const cacheKey = this.generateCacheKey(plantData, 'optimize');
-    
-    return this.getCachedOrExecute(cacheKey, async () => {
-      try {
-        const plantAnalysis = plantData.map(plant => ({
-          name: plant.plant_name,
-          fuel: plant.fuel_type,
-          efficiency: plant.efficiency_percent,
-          emissions: plant.CO2_emissions_tonnes,
-          output: plant.electricity_output_MWh
-        }));
+    try {
+      const plantAnalysis = plantData.map(plant => ({
+        name: plant.plant_name,
+        fuel: plant.fuel_type,
+        efficiency: plant.efficiency_percent,
+        emissions: plant.CO2_emissions_tonnes,
+        output: plant.electricity_output_MWh
+      }));
 
-        const prompt = `Analyze these power plant performance metrics and provide optimization recommendations:
+      const prompt = `Analyze these power plant performance metrics and provide optimization recommendations:
 
 ${JSON.stringify(plantAnalysis, null, 2)}
 
@@ -217,38 +214,37 @@ Focus on:
 
 Provide 5-8 specific, actionable optimization recommendations as a JSON array of strings.`;
 
-        const completion = await this.retry(() => client.chat.completions.create({
-          model: this.MODEL,
-          messages: [
-            {
-              role: "system",
-              content: "You are a power plant optimization expert with deep knowledge of thermal efficiency, emissions control, and operational best practices."
-            },
-            {
-              role: "user",
-              content: prompt
-            }
-          ],
-          extra_headers: {
-            "HTTP-Referer": this.SITE_URL,
-            "X-Title": this.SITE_NAME,
+      const completion = await this.retry(() => client.chat.completions.create({
+        model: this.MODEL,
+        messages: [
+          {
+            role: "system",
+            content: "You are a power plant optimization expert with deep knowledge of thermal efficiency, emissions control, and operational best practices."
           },
-          temperature: 0.6,
-          max_tokens: 1200
-        }));
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        extra_headers: {
+          "HTTP-Referer": this.SITE_URL,
+          "X-Title": this.SITE_NAME,
+        },
+        temperature: 0.6,
+        max_tokens: 1200
+      }));
 
-        const response = completion.choices[0]?.message?.content;
-        if (!response) {
-          throw new Error('No response from AI service');
-        }
-
-        return JSON.parse(response) as string[];
-
-      } catch (error) {
-        console.error('AI Optimization Error:', error);
-        return this.getFallbackOptimizationRecommendations();
+      const response = completion.choices[0]?.message?.content;
+      if (!response) {
+        throw new Error('No response from AI service');
       }
-    });
+
+      return JSON.parse(response) as string[];
+
+    } catch (error) {
+      console.error('AI Optimization Error:', error);
+      return this.getFallbackOptimizationRecommendations();
+    }
   }
 
   static async predictEmissionsTrends(data: PowerPlantData[]): Promise<{
@@ -257,10 +253,13 @@ Provide 5-8 specific, actionable optimization recommendations as a JSON array of
     factors: string[];
     timeline: string;
   }> {
-    try {
-      const trendData = this.calculateTrends(data);
-      
-      const prompt = `Based on this emissions trend data, predict future emissions patterns:
+    const cacheKey = this.generateCacheKey(data, 'predict');
+    
+    return this.getCachedOrExecute(cacheKey, async () => {
+      try {
+        const trendData = this.calculateTrends(data);
+        
+        const prompt = `Based on this emissions trend data, predict future emissions patterns:
 
 ${JSON.stringify(trendData, null, 2)}
 
@@ -278,42 +277,43 @@ Return as JSON with structure:
   "timeline": "Timeline description"
 }`;
 
-      const completion = await this.retry(() => client.chat.completions.create({
-        model: this.MODEL,
-        messages: [
-          {
-            role: "system",
-            content: "You are a data scientist specializing in emissions forecasting and trend analysis for power generation facilities."
+        const completion = await this.retry(() => client.chat.completions.create({
+          model: this.MODEL,
+          messages: [
+            {
+              role: "system",
+              content: "You are a data scientist specializing in emissions forecasting and trend analysis for power generation facilities."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          extra_headers: {
+            "HTTP-Referer": this.SITE_URL,
+            "X-Title": this.SITE_NAME,
           },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        extra_headers: {
-          "HTTP-Referer": this.SITE_URL,
-          "X-Title": this.SITE_NAME,
-        },
-        temperature: 0.4,
-        max_tokens: 800
-      }));
+          temperature: 0.4,
+          max_tokens: 800
+        }));
 
-      const response = completion.choices[0]?.message?.content;
-      if (!response) {
-        throw new Error('No response from AI service');
+        const response = completion.choices[0]?.message?.content;
+        if (!response) {
+          throw new Error('No response from AI service');
+        }
+
+        return JSON.parse(response);
+
+      } catch (error) {
+        console.error('AI Prediction Error:', error);
+        return {
+          prediction: "Based on current trends, emissions are expected to remain stable with potential for 5-10% reduction through efficiency improvements.",
+          confidence: 75,
+          factors: ["Current efficiency levels", "Fuel mix composition", "Operational patterns"],
+          timeline: "Next 6-12 months"
+        };
       }
-
-      return JSON.parse(response);
-
-    } catch (error) {
-      console.error('AI Prediction Error:', error);
-      return {
-        prediction: "Based on current trends, emissions are expected to remain stable with potential for 5-10% reduction through efficiency improvements.",
-        confidence: 75,
-        factors: ["Current efficiency levels", "Fuel mix composition", "Operational patterns"],
-        timeline: "Next 6-12 months"
-      };
-    }
+    });
   }
 
   // Helper methods
