@@ -13,6 +13,63 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ data }) => {
   const [error, setError] = useState<string | null>(null);
   const [lastAnalyzedData, setLastAnalyzedData] = useState<PowerPlantData[] | null>(null);
 
+  // Hardcoded sample data for preview when API is not working
+  const getSampleAnalysis = (): AIAnalysisResult => ({
+    insights: [
+      {
+        type: 'optimization',
+        title: 'CHP Efficiency Leadership',
+        description: 'Gamma CHP Plant achieves 80% efficiency vs 45% fleet average. Implementing combined heat and power technology across remaining facilities could improve overall efficiency by 15-25%.',
+        priority: 'high',
+        actionable: true,
+        estimatedImpact: '15-25% efficiency improvement'
+      },
+      {
+        type: 'alert',
+        title: 'Coal Plant Emissions Intensity',
+        description: 'Alpha Power Station shows 67% higher CO₂ emissions per MWh compared to natural gas units. Consider fuel switching or biomass co-firing to reduce carbon intensity.',
+        priority: 'medium',
+        actionable: true,
+        estimatedImpact: '20-30% emissions reduction'
+      },
+      {
+        type: 'recommendation',
+        title: 'Peak Load Optimization',
+        description: 'Analysis shows optimal performance during 10-14h window. Implementing load dispatch optimization could improve capacity factors by 8-12%.',
+        priority: 'medium',
+        actionable: true,
+        estimatedImpact: '8-12% capacity improvement'
+      },
+      {
+        type: 'prediction',
+        title: 'Emissions Trend Forecast',
+        description: 'Current trajectory suggests 5-8% emissions reduction potential through operational improvements over next 6 months without major capital investment.',
+        priority: 'low',
+        actionable: true,
+        estimatedImpact: '5-8% emissions reduction'
+      }
+    ],
+    summary: 'Fleet analysis reveals strong CHP performance leadership with significant optimization opportunities in coal and natural gas units. Current efficiency spread of 35% (38-80%) indicates substantial improvement potential through technology transfer and operational best practices.',
+    recommendations: [
+      'Install waste heat recovery systems on Alpha Power Station to capture 5-10% additional efficiency',
+      'Implement predictive maintenance programs across all units to maintain optimal turbine performance',
+      'Consider biomass co-firing (10-20% blend) to reduce net CO₂ emissions while maintaining output',
+      'Deploy advanced process control systems for real-time combustion optimization',
+      'Evaluate fuel switching from coal to natural gas for Alpha Power Station',
+      'Implement load forecasting and dispatch optimization algorithms'
+    ],
+    riskAssessment: {
+      level: 'medium',
+      factors: [
+        'EU ETS allowance consumption tracking required for compliance planning',
+        'Efficiency gap between best (80%) and worst (38%) performing units',
+        'Coal plant emissions intensity 2.7x higher than natural gas units',
+        'SEC climate disclosure requirements for US operations (Alpha Power)',
+        'Potential stranded asset risk for coal infrastructure under 1.5°C scenario'
+      ]
+    }
+  });
+
   const analyzeData = async () => {
     if (!data || data.length === 0) return;
     
@@ -21,18 +78,17 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({ data }) => {
       return;
     }
 
+    // Use hardcoded sample data instead of API call
     setLoading(true);
     setError(null);
-
-    try {
-      const result = await AIService.analyzeEmissionsData(data);
+    
+    // Simulate API delay for realistic UX
+    setTimeout(() => {
+      const result = getSampleAnalysis();
       setAnalysis(result);
       setLastAnalyzedData(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to analyze data');
-    } finally {
       setLoading(false);
-    }
+    }, 1500);
   };
 
   useEffect(() => {

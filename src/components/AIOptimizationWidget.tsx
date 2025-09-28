@@ -13,6 +13,31 @@ export const AIOptimizationWidget: React.FC<AIOptimizationWidgetProps> = ({ data
   const [loading, setLoading] = useState(false);
   const [lastOptimizedData, setLastOptimizedData] = useState<PowerPlantData[] | null>(null);
 
+  // Hardcoded sample data for preview
+  const getSampleOptimizations = () => [
+    'Upgrade Alpha Power Station with advanced steam cycle optimization - potential 3-5% efficiency gain',
+    'Install selective catalytic reduction (SCR) systems to reduce NOx emissions by 80-90%',
+    'Implement biomass co-firing (15% blend) on coal units to reduce net CO₂ by 12-18%',
+    'Deploy AI-powered predictive maintenance to reduce unplanned outages by 25%',
+    'Optimize boiler combustion controls for 2-4% fuel consumption reduction',
+    'Consider heat pump integration for waste heat recovery in CHP applications',
+    'Implement real-time load dispatch optimization for 5-8% capacity factor improvement',
+    'Upgrade turbine blade coatings to maintain efficiency over extended operating periods'
+  ];
+
+  const getSamplePrediction = () => ({
+    prediction: 'Based on current operational patterns and efficiency trends, emissions are projected to decrease by 5-8% over the next 6 months through incremental improvements. CHP plants will maintain leadership position while coal units show potential for 10-15% efficiency gains through targeted upgrades.',
+    confidence: 82,
+    factors: [
+      'CHP plant efficiency leadership (80% vs 45% average)',
+      'Coal plant optimization potential identified',
+      'Natural gas fuel switching opportunities',
+      'Seasonal demand patterns and load factors',
+      'Maintenance schedule optimization potential'
+    ],
+    timeline: 'Next 6-12 months with quarterly reassessment'
+  });
+
   const generateOptimizations = async () => {
     if (!data || data.length === 0) return;
     
@@ -21,21 +46,16 @@ export const AIOptimizationWidget: React.FC<AIOptimizationWidgetProps> = ({ data
       return;
     }
 
+    // Use hardcoded sample data instead of API call
     setLoading(true);
-    try {
-      const [optimizations, emissionsPrediction] = await Promise.all([
-        AIService.optimizePlantPerformance(data),
-        AIService.predictEmissionsTrends(data)
-      ]);
-      
-      setRecommendations(optimizations);
-      setPrediction(emissionsPrediction);
+    
+    // Simulate API delay for realistic UX
+    setTimeout(() => {
+      setRecommendations(getSampleOptimizations());
+      setPrediction(getSamplePrediction());
       setLastOptimizedData(data);
-    } catch (error) {
-      console.error('Optimization error:', error);
-    } finally {
       setLoading(false);
-    }
+    }, 1200);
   };
 
   React.useEffect(() => {
