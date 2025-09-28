@@ -103,7 +103,7 @@ Respond in JSON format with the following structure:
   }
 }`;
 
-      const completion = await client.chat.completions.create({
+      const completion = await this.retry(() => client.chat.completions.create({
         model: this.MODEL,
         messages: [
           {
@@ -122,7 +122,7 @@ Respond in JSON format with the following structure:
         temperature: 0.7,
         max_tokens: 2000
       }));
-      const completion = await this.retry(() => client.chat.completions.create({
+      
       const response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error('No response from AI service');
