@@ -14,6 +14,45 @@ export const AIComplianceAssistant: React.FC<AIComplianceAssistantProps> = ({ da
   const [lastAnalyzedData, setLastAnalyzedData] = useState<PowerPlantData[] | null>(null);
   const [lastJurisdiction, setLastJurisdiction] = useState<'EU' | 'US' | 'COMBINED'>('COMBINED');
 
+  // Hardcoded sample compliance insights
+  const getSampleInsights = (jurisdiction: 'EU' | 'US' | 'COMBINED'): string[] => {
+    const baseInsights = [
+      'Ensure continuous emissions monitoring systems (CEMS) are properly calibrated and certified annually',
+      'Maintain comprehensive audit trail for all emissions data with 10-year retention requirement',
+      'Implement quarterly third-party verification processes for material emission sources'
+    ];
+
+    if (jurisdiction === 'EU' || jurisdiction === 'COMBINED') {
+      return [
+        ...baseInsights,
+        'Monitor EU ETS allowance prices for optimal surrender timing - current market volatility suggests Q2 procurement strategy',
+        'Prepare CSRD double materiality assessment by Q3 2025 - climate change identified as material topic',
+        'Implement ESRS E1 disclosure requirements including Scope 3 emissions for upstream fuel supply chain',
+        'Ensure Data Act compliance with standardized API endpoints for regulatory data sharing'
+      ];
+    }
+
+    if (jurisdiction === 'US') {
+      return [
+        ...baseInsights,
+        'Quantify climate-related financial risks for SEC 10-K disclosure - physical and transition risks assessment required',
+        'Develop scenario analysis for 1.5°C and 3°C pathways with quantified financial impacts',
+        'Implement Scope 1 and 2 emissions verification for SEC climate disclosure requirements',
+        'Prepare climate governance framework documentation for SEC reporting'
+      ];
+    }
+
+    // COMBINED
+    return [
+      ...baseInsights,
+      'Coordinate EU ETS and SEC climate disclosure timelines - Q1 EU ETS verification, Q2 SEC 10-K filing',
+      'Implement unified GHG accounting system meeting both EU MRV and SEC requirements',
+      'Develop cross-jurisdictional climate risk assessment covering EU physical risks and US transition risks',
+      'Establish data governance framework compliant with EU Data Act and SEC disclosure requirements',
+      'Prepare integrated climate transition plan addressing both EU taxonomy and SEC scenario analysis'
+    ];
+  };
+
   const generateInsights = async () => {
     if (!data || data.length === 0) return;
     
@@ -23,17 +62,16 @@ export const AIComplianceAssistant: React.FC<AIComplianceAssistantProps> = ({ da
       return;
     }
 
+    // Use hardcoded sample data instead of API call
     setLoading(true);
-    try {
-      const complianceInsights = await AIService.generateComplianceInsights(data, jurisdiction);
-      setInsights(complianceInsights);
+    
+    // Simulate API delay for realistic UX
+    setTimeout(() => {
+      setInsights(getSampleInsights(jurisdiction));
       setLastAnalyzedData(data);
       setLastJurisdiction(jurisdiction);
-    } catch (error) {
-      console.error('Compliance insights error:', error);
-    } finally {
       setLoading(false);
-    }
+    }, 1000);
   };
 
   React.useEffect(() => {
