@@ -16,7 +16,8 @@ import {
   BarChart3,
   Shield,
   FileText,
-  Brain
+  Brain,
+  Lightbulb
 } from 'lucide-react';
 
 export const DashboardOverview: React.FC = () => {
@@ -219,7 +220,146 @@ export const DashboardOverview: React.FC = () => {
             <p className="text-gray-600">Quick AI-powered analysis of your data</p>
           </div>
         </div>
-        <AIInsightsPanel data={csvData} />
+        
+        {/* Sample AI Insights when no data is available */}
+        {!csvData || csvData.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Brain className="w-6 h-6 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">AI Insights</h3>
+                  <p className="text-sm text-gray-600">Powered by DeepSeek AI</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-green-100 text-green-700">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium">Sample Preview</span>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              {/* Sample Summary */}
+              <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 border border-purple-200">
+                <h4 className="font-semibold text-purple-900 mb-2">AI Analysis Summary</h4>
+                <p className="text-sm text-purple-800">
+                  Power plant operations show strong efficiency performance with CHP facilities achieving 80% efficiency. 
+                  Natural gas plants demonstrate optimal fuel utilization, while coal facilities present opportunities 
+                  for emissions reduction through advanced control systems.
+              {/* Sample Risk Assessment */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold text-gray-900">Risk Assessment</h4>
+                  <span className="px-3 py-1 rounded-full text-xs font-medium text-yellow-600 bg-yellow-100">
+                    MEDIUM RISK
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-start space-x-2 text-sm text-gray-700">
+                    <span className="text-gray-400 mt-1">•</span>
+                    <span>EU ETS compliance requires monitoring of allowance consumption rates</span>
+                  </div>
+                  <div className="flex items-start space-x-2 text-sm text-gray-700">
+                    <span className="text-gray-400 mt-1">•</span>
+                    <span>Efficiency optimization potential identified in coal-fired units</span>
+                  </div>
+                  <div className="flex items-start space-x-2 text-sm text-gray-700">
+                    <span className="text-gray-400 mt-1">•</span>
+                    <span>SEC climate disclosure requirements for US operations</span>
+                  </div>
+                </div>
+              </div>
+                </p>
+              {/* Sample Insights */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-4">Key Insights</h4>
+                <div className="space-y-3">
+                  <div className="border rounded-lg p-4 border-green-200 bg-green-50 text-green-800">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 mt-1">
+                        <TrendingUp className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <h5 className="font-medium">Efficiency Optimization Opportunity</h5>
+                          <span className="text-xs px-2 py-1 rounded-full bg-white bg-opacity-50">
+                            HIGH
+                          </span>
+                        </div>
+                        <p className="text-sm mb-2">
+                          CHP plants demonstrate 80% efficiency vs 45% average. Implementing combined heat and power 
+                          technology across facilities could improve overall efficiency by 15-25%.
+                        </p>
+                        <div className="text-xs bg-white bg-opacity-50 rounded px-2 py-1 inline-block">
+                          Impact: 15-25% efficiency improvement
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="border rounded-lg p-4 border-yellow-200 bg-yellow-50 text-yellow-800">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 mt-1">
+                        <AlertTriangle className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <h5 className="font-medium">Emissions Reduction Strategy</h5>
+                          <span className="text-xs px-2 py-1 rounded-full bg-white bg-opacity-50">
+                            MEDIUM
+                          </span>
+                        </div>
+                        <p className="text-sm mb-2">
+                          Coal facilities show 67% higher emissions intensity. Fuel switching to natural gas or 
+                          biomass co-firing could reduce CO₂ emissions by 20-30%.
+                        </p>
+                        <div className="text-xs bg-white bg-opacity-50 rounded px-2 py-1 inline-block">
+                          Impact: 20-30% emissions reduction
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              </div>
+              {/* Sample Recommendations */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-4">AI Recommendations</h4>
+                <div className="space-y-2">
+                  <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <Lightbulb className="w-4 h-4 text-blue-600 mt-1 flex-shrink-0" />
+                    <p className="text-sm text-blue-800">
+                      Install waste heat recovery systems on coal units to capture 5-10% additional efficiency
+                    </p>
+                  </div>
+                  <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <Lightbulb className="w-4 h-4 text-blue-600 mt-1 flex-shrink-0" />
+                    <p className="text-sm text-blue-800">
+                      Implement predictive maintenance programs to maintain optimal turbine performance
+                    </p>
+                  </div>
+                  <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <Lightbulb className="w-4 h-4 text-blue-600 mt-1 flex-shrink-0" />
+                    <p className="text-sm text-blue-800">
+                      Consider biomass co-firing to reduce net CO₂ emissions while maintaining output
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-6 pt-4 border-t border-gray-200 text-center">
+              <p className="text-sm text-gray-500">
+                Upload your CSV data to get personalized AI insights powered by DeepSeek
+              </p>
+            </div>
+          </div>
+        ) : (
+          <AIInsightsPanel data={csvData} />
+        )}
       </div>
     </div>
   );
