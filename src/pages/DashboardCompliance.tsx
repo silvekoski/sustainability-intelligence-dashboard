@@ -35,6 +35,28 @@ export const DashboardCompliance: React.FC = () => {
           >
             Go to Settings
           </button>
+          
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="flex items-center justify-center space-x-4">
+              <button
+                type="button"
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = '/sample_data.csv';
+                  link.download = 'sample_data.csv';
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              >
+                Download sample data
+              </button>
+              <p className="text-sm text-gray-600">
+                Download this sample data to experiment with our application.
+              </p>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="space-y-8">
