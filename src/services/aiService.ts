@@ -30,8 +30,8 @@ export class AIService {
   private static readonly MODEL = "deepseek/deepseek-chat-v3-0324:free";
   private static readonly SITE_URL = "https://esboost.ai";
   private static readonly SITE_NAME = "ESBoost - Sustainability Intelligence";
-  private static readonly MAX_RETRIES = 3;
-  private static readonly BASE_DELAY = 1000; // 1 second
+  private static readonly MAX_RETRIES = 5;
+  private static readonly BASE_DELAY = 2000; // 2 seconds
 
   private static async retry<T>(
     operation: () => Promise<T>,
