@@ -30,6 +30,41 @@ export class AIService {
   private static readonly MODEL = "deepseek/deepseek-chat-v3-0324:free";
   private static readonly SITE_URL = "https://esboost.ai";
   private static readonly SITE_NAME = "ESBoost - Sustainability Intelligence";
+  private static readonly MAX_RETRIES = 3;
+  private static readonly BASE_DELAY = 1000; // 1 second
+
+  private static async retry<T>(
+    operation: () => Promise<T>,
+    maxRetries: number = this.MAX_RETRIES
+  ): Promise<T> {
+    let lastError: Error;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error: any) {
+        lastError = error;
+        
+        // Check if it's a rate limit error (429) or server error (5xx)
+        const isRetryableError = 
+          error.message?.includes('429') || 
+          error.message?.includes('Provider returned error') ||
+          error.status === 429 ||
+          (error.status >= 500 && error.status < 600);
+        
+        if (!isRetryableError || attempt === maxRetries) {
+          throw error;
+        }
+        
+        // Exponential backoff: wait longer after each attempt
+        const delay = this.BASE_DELAY * Math.pow(2, attempt);
+        console.log(`AI API attempt ${attempt + 1} failed, retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    
+    throw lastError!;
+  }
 
   static async analyzeEmissionsData(data: PowerPlantData[]): Promise<AIAnalysisResult> {
     try {
@@ -86,8 +121,8 @@ Respond in JSON format with the following structure:
         },
         temperature: 0.7,
         max_tokens: 2000
-      });
-
+      }));
+      const completion = await this.retry(() => client.chat.completions.create({
       const response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error('No response from AI service');
@@ -118,7 +153,7 @@ ${jurisdiction === 'US' || jurisdiction === 'COMBINED' ? '- SEC climate disclosu
 
 Return 5-7 specific, actionable compliance recommendations as a JSON array of strings.`;
 
-      const completion = await client.chat.completions.create({
+      const completion = await this.retry(() => client.chat.completions.create({
         model: this.MODEL,
         messages: [
           {
@@ -136,7 +171,7 @@ Return 5-7 specific, actionable compliance recommendations as a JSON array of st
         },
         temperature: 0.5,
         max_tokens: 1000
-      });
+      }));
 
       const response = completion.choices[0]?.message?.content;
       if (!response) {
@@ -174,7 +209,7 @@ Focus on:
 
 Provide 5-8 specific, actionable optimization recommendations as a JSON array of strings.`;
 
-      const completion = await client.chat.completions.create({
+      const completion = await this.retry(() => client.chat.completions.create({
         model: this.MODEL,
         messages: [
           {
@@ -192,7 +227,7 @@ Provide 5-8 specific, actionable optimization recommendations as a JSON array of
         },
         temperature: 0.6,
         max_tokens: 1200
-      });
+      }));
 
       const response = completion.choices[0]?.message?.content;
       if (!response) {
@@ -234,7 +269,7 @@ Return as JSON with structure:
   "timeline": "Timeline description"
 }`;
 
-      const completion = await client.chat.completions.create({
+      const completion = await this.retry(() => client.chat.completions.create({
         model: this.MODEL,
         messages: [
           {
@@ -252,7 +287,7 @@ Return as JSON with structure:
         },
         temperature: 0.4,
         max_tokens: 800
-      });
+      }));
 
       const response = completion.choices[0]?.message?.content;
       if (!response) {
