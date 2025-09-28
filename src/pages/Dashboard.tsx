@@ -7,6 +7,9 @@ import { FactoryComparisonPanel } from '../components/FactoryComparisonPanel';
 import { ComplianceReportGenerator } from '../components/ComplianceReportGenerator';
 import { EUPermitsCard } from '../components/EUPermitsCard';
 import { SECClimateDisclosureSection } from '../components/SECClimateDisclosureSection';
+import { AIInsightsPanel } from '../components/AIInsightsPanel';
+import { AIOptimizationWidget } from '../components/AIOptimizationWidget';
+import { AIComplianceAssistant } from '../components/AIComplianceAssistant';
 import { useData } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { 
@@ -180,6 +183,26 @@ export const Dashboard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
           <EUPermitsCard />
         </div>
+      </div>
+
+      {/* AI-Powered Insights */}
+      <div className="mb-8">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="p-2 bg-purple-100 rounded-lg">
+            <TrendingUp className="w-6 h-6 text-purple-600" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">AI-Powered Insights</h2>
+            <p className="text-gray-600">Advanced analytics powered by DeepSeek AI</p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <AIInsightsPanel data={csvData} />
+          <AIOptimizationWidget data={csvData} />
+        </div>
+        
+        <AIComplianceAssistant data={csvData} />
       </div>
 
       {/* Factory Comparison & Compliance Panel */}

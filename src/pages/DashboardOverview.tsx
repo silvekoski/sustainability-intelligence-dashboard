@@ -1,5 +1,6 @@
 import React from 'react';
 import { MetricCard } from '../components/MetricCard';
+import { AIInsightsPanel } from '../components/AIInsightsPanel';
 import { useData } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { 
@@ -14,7 +15,8 @@ import {
   Upload,
   BarChart3,
   Shield,
-  FileText
+  FileText,
+  Brain
 } from 'lucide-react';
 
 export const DashboardOverview: React.FC = () => {
@@ -204,6 +206,20 @@ export const DashboardOverview: React.FC = () => {
             <span className="font-medium text-gray-900">Generate Report</span>
           </button>
         </div>
+      </div>
+
+      {/* AI Insights Preview */}
+      <div className="mt-8">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="p-2 bg-purple-100 rounded-lg">
+            <Brain className="w-6 h-6 text-purple-600" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">AI Insights Preview</h2>
+            <p className="text-gray-600">Quick AI-powered analysis of your data</p>
+          </div>
+        </div>
+        <AIInsightsPanel data={csvData} />
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import React from 'react';
 import { EUPermitsCard } from '../components/EUPermitsCard';
 import { SECClimateDisclosureSection } from '../components/SECClimateDisclosureSection';
+import { AIComplianceAssistant } from '../components/AIComplianceAssistant';
 import { useAuth } from '../contexts/AuthContext';
 import { Shield, Upload } from 'lucide-react';
 
@@ -47,6 +48,12 @@ export const DashboardCompliance: React.FC = () => {
           <div>
             <h2 className="text-xl font-semibold text-gray-900 mb-4">US SEC Climate Disclosure</h2>
             <SECClimateDisclosureSection currentData={csvData} />
+          </div>
+
+          {/* AI Compliance Assistant */}
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">AI Compliance Assistant</h2>
+            <AIComplianceAssistant data={csvData} />
           </div>
 
           {/* Compliance Summary */}

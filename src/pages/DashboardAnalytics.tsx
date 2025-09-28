@@ -1,6 +1,7 @@
 import React from 'react';
 import { EmissionsChart } from '../components/EmissionsChart';
 import { EfficiencyGauge } from '../components/EfficiencyGauge';
+import { AIOptimizationWidget } from '../components/AIOptimizationWidget';
 import { useData } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { Loader2, AlertCircle, Upload, BarChart3 } from 'lucide-react';
@@ -92,6 +93,8 @@ export const DashboardAnalytics: React.FC = () => {
 
       {/* Additional Analytics Sections */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <AIOptimizationWidget data={csvData} />
+        
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Trends</h3>
           <div className="space-y-4">
@@ -110,7 +113,9 @@ export const DashboardAnalytics: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      </div>
+      
+      <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Key Insights</h3>
           <div className="space-y-3">
             <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
@@ -130,7 +135,6 @@ export const DashboardAnalytics: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 };
