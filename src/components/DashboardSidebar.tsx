@@ -32,7 +32,6 @@ export const DashboardSidebar: React.FC = () => {
             alt="ESBoost" 
             className="h-8 w-auto"
           />
-          <span className="ml-2 text-xl font-semibold text-gray-900">ESBoost</span>
         </div>
         <nav className="mt-8 flex-1 px-2 space-y-1">
           {navigation.map((item) => {
