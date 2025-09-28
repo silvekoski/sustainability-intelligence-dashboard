@@ -32,6 +32,11 @@ export class AIService {
   private static readonly SITE_NAME = "ESBoost - Sustainability Intelligence";
   private static readonly MAX_RETRIES = 5;
   private static readonly BASE_DELAY = 2000; // 2 seconds
+  private static readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  
+  // Simple in-memory cache
+  private static cache = new Map<string, { data: any; timestamp: number }>();
+  private static pendingRequests = new Map<string, Promise<any>>();
 
   private static async retry<T>(
     operation: () => Promise<T>,
