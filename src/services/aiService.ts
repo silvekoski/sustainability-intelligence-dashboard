@@ -38,6 +38,60 @@ export class AIService {
   private static cache = new Map<string, { data: any; timestamp: number }>();
   private static pendingRequests = new Map<string, Promise<any>>();
 
+  // Generate cache key from data
+  private static generateCacheKey(data: PowerPlantData[], operation: string, jurisdiction?: string): string {
+    const dataHash = JSON.stringify({
+      length: data.length,
+      totalEmissions: data.reduce((sum, d) => sum + d.CO2_emissions_tonnes, 0),
+      totalOutput: data.reduce((sum, d) => sum + d.electricity_output_MWh, 0),
+      operation,
+      jurisdiction
+    });
+    return btoa(dataHash).slice(0, 32); // Short hash
+  }
+
+  // Check if cache entry is valid
+  private static isCacheValid(timestamp: number): boolean {
+    return Date.now() - timestamp < this.CACHE_DURATION;
+  }
+
+  // Get from cache or execute function
+  private static async getCachedOrExecute<T>(
+    cacheKey: string,
+    operation: () => Promise<T>
+  ): Promise<T> {
+    // Check cache first
+    const cached = this.cache.get(cacheKey);
+    if (cached && this.isCacheValid(cached.timestamp)) {
+      console.log(`AI Cache hit for key: ${cacheKey}`);
+      return cached.data;
+    }
+
+    // Check if request is already pending
+    const pending = this.pendingRequests.get(cacheKey);
+    if (pending) {
+      console.log(`AI Request already pending for key: ${cacheKey}`);
+      return pending;
+    }
+
+    // Execute new request
+    const promise = operation();
+    this.pendingRequests.set(cacheKey, promise);
+
+    try {
+      const result = await promise;
+      // Cache the result
+      this.cache.set(cacheKey, {
+        data: result,
+        timestamp: Date.now()
+      });
+      return result;
+    } finally {
+      // Remove from pending requests
+      this.pendingRequests.delete(cacheKey);
+    }
+  }
+
   private static async retry<T>(
     operation: () => Promise<T>,
     maxRetries: number = this.MAX_RETRIES
