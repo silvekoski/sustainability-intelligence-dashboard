@@ -191,6 +191,32 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsAutoLoading(false);
     }
   };
+
+  // Refresh auto-load (force reload from storage)
+  const refreshAutoLoad = async () => {
+    if (!state.user?.id) return;
+    
+    setIsAutoLoading(true);
+    setAutoLoadError(null);
+    
+    try {
+      const result = await AutoDataLoader.forceRefresh(state.user.id);
+      
+      if (result.success && result.data) {
+        setCsvData(result.data);
+        setAutoLoadedFileName(result.fileName || null);
+        console.log('Force refreshed CSV data:', result.fileName);
+      } else {
+        setAutoLoadError(result.error || 'Failed to refresh data');
+      }
+    } catch (error) {
+      console.error('Refresh error:', error);
+      setAutoLoadError(error instanceof Error ? error.message : 'Failed to refresh data');
+    } finally {
+      setIsAutoLoading(false);
+    }
+  };
+
   const login = async (email: string, password: string) => {
     setState(prev => ({ ...prev, loading: true }));
 
@@ -219,31 +245,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         confirmPassword,
         fullName
       });
-
-  // Refresh auto-load (force reload from storage)
-  const refreshAutoLoad = async () => {
-    if (!state.user?.id) return;
-    
-    setIsAutoLoading(true);
-    setAutoLoadError(null);
-    
-    try {
-      const result = await AutoDataLoader.forceRefresh(state.user.id);
-      
-      if (result.success && result.data) {
-        setCsvData(result.data);
-        setAutoLoadedFileName(result.fileName || null);
-        console.log('Force refreshed CSV data:', result.fileName);
-      } else {
-        setAutoLoadError(result.error || 'Failed to refresh data');
-      }
-    } catch (error) {
-      console.error('Refresh error:', error);
-      setAutoLoadError(error instanceof Error ? error.message : 'Failed to refresh data');
-    } finally {
-      setIsAutoLoading(false);
-    }
-  };
 
       if (result.error) {
         setState(prev => ({ ...prev, loading: false }));
