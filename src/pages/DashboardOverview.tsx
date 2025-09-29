@@ -17,7 +17,9 @@ import {
   Shield,
   FileText,
   Brain,
-  Lightbulb
+  Lightbulb,
+  CheckCircle,
+  AlertTriangle
 } from 'lucide-react';
 
 export const DashboardOverview: React.FC = () => {
