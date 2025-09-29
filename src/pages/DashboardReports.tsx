@@ -4,7 +4,18 @@ import { useAuth } from '../contexts/AuthContext';
 import { FileText, Upload } from 'lucide-react';
 
 export const DashboardReports: React.FC = () => {
-  const { csvData } = useAuth();
+  const { csvData, isAutoLoading } = useAuth();
+
+  if (isAutoLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="flex items-center space-x-3">
+          <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+          <span className="text-lg font-medium text-gray-700">Auto-loading your data...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">

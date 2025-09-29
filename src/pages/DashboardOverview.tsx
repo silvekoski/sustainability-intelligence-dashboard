@@ -21,15 +21,17 @@ import {
 } from 'lucide-react';
 
 export const DashboardOverview: React.FC = () => {
-  const { csvData } = useAuth();
+  const { csvData, isAutoLoading, autoLoadedFileName } = useAuth();
   const { loading, error, metrics, changes } = useData(csvData);
 
-  if (loading) {
+  if (loading || isAutoLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="flex items-center space-x-3">
           <Loader2 className="w-8 h-8 animate-spin text-green-600" />
-          <span className="text-lg font-medium text-gray-700">Loading overview...</span>
+          <span className="text-lg font-medium text-gray-700">
+            {isAutoLoading ? 'Auto-loading your data...' : 'Loading overview...'}
+          </span>
         </div>
       </div>
     );
@@ -93,7 +95,15 @@ export const DashboardOverview: React.FC = () => {
     <div className="max-w-7xl mx-auto px-6 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
-        <p className="text-gray-600 mt-2">Key performance indicators and system status</p>
+        <div className="flex items-center justify-between mt-2">
+          <p className="text-gray-600">Key performance indicators and system status</p>
+          {autoLoadedFileName && (
+            <div className="flex items-center space-x-2 text-sm text-green-600">
+              <CheckCircle className="w-4 h-4" />
+              <span>Auto-loaded: {autoLoadedFileName}</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Key Metrics */}

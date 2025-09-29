@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 export const Header = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const { user, profile, logout } = useAuth();
+  const { user, logout, autoLoadedFileName, isAutoLoading } = useAuth();
 
   const handleLogout = async () => {
     await logout();
@@ -34,7 +34,16 @@ export const Header = () => {
             <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
               <Activity className="w-4 h-4 text-white" />
             </div>
-            <span className="text-sm font-medium text-gray-700">Live Monitoring</span>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-gray-700">
+                {isAutoLoading ? 'Loading Data...' : 'Live Monitoring'}
+              </span>
+              {autoLoadedFileName && !isAutoLoading && (
+                <span className="text-xs text-gray-500">
+                  Data: {autoLoadedFileName.length > 20 ? `${autoLoadedFileName.substring(0, 20)}...` : autoLoadedFileName}
+                </span>
+              )}
+            </div>
           </div>
           
           {/* User Menu */}
@@ -48,7 +57,7 @@ export const Header = () => {
               </div>
               <div className="text-left">
                 <p className="text-sm font-medium text-gray-900">
-                  {profile?.full_name || user?.email?.split('@')[0]}
+                  {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
                 </p>
                 <p className="text-xs text-gray-500">{user?.email}</p>
               </div>

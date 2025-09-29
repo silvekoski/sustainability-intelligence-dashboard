@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, File, Trash2, AlertCircle, CheckCircle, Loader2, Download, X } from 'lucide-react';
+import { Upload, File, Trash2, AlertCircle, CheckCircle, Loader2, Download, X, RefreshCw, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { CSVService } from '../services/csvService';
 import { UserCSVFile } from '../types/csv';
@@ -17,7 +17,7 @@ export const CSVUploadManager: React.FC<CSVUploadManagerProps> = ({ onDataChange
   const [userFiles, setUserFiles] = useState<UserCSVFile[]>([]);
   const [currentFile, setCurrentFile] = useState<UserCSVFile | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { user } = useAuth();
+  const { user, autoLoadedFileName, isAutoLoading, autoLoadError, refreshAutoLoad } = useAuth();
 
   useEffect(() => {
     if (user?.id) {
@@ -228,18 +228,46 @@ export const CSVUploadManager: React.FC<CSVUploadManagerProps> = ({ onDataChange
               <File className="w-5 h-5 text-blue-600" />
               <div>
                 <p className="text-sm font-medium text-blue-900">
-                  {currentFile ? `Data loaded from: ${currentFile.fileName}` : 'Data loaded'}
+                  {autoLoadedFileName ? `Auto-loaded: ${autoLoadedFileName}` : 
+                   currentFile ? `Data loaded from: ${currentFile.fileName}` : 'Data loaded'}
                 </p>
                 <p className="text-xs text-blue-700">
                   {currentData.length.toLocaleString()} records available
                 </p>
               </div>
             </div>
-            {currentFile && (
+            <div className="flex items-center space-x-2">
+              {autoLoadedFileName && (
+                <div className="flex items-center space-x-1 text-xs text-blue-600">
+                  <Clock className="w-3 h-3" />
+                  <span>Auto-loaded</span>
+                </div>
+              )}
+              <button
+                onClick={refreshAutoLoad}
+                disabled={isAutoLoading}
+                className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
+                title="Refresh from storage"
+              >
+                <RefreshCw className={`w-4 h-4 ${isAutoLoading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+            {currentFile && !autoLoadedFileName && (
               <p className="text-xs text-blue-600">
                 Uploaded: {new Date(currentFile.uploadedAt).toLocaleDateString()}
               </p>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Auto-load Error */}
+      {autoLoadError && (
+        <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-center space-x-3">
+          <AlertCircle className="w-5 h-5 text-yellow-500 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm text-yellow-700">Auto-load warning: {autoLoadError}</p>
+            <p className="text-xs text-yellow-600 mt-1">You can still upload files manually</p>
           </div>
         </div>
       )}

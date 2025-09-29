@@ -5,15 +5,17 @@ import { useAuth } from '../contexts/AuthContext';
 import { Loader2, AlertCircle, Upload, Factory } from 'lucide-react';
 
 export const DashboardPlants: React.FC = () => {
-  const { csvData } = useAuth();
+  const { csvData, isAutoLoading } = useAuth();
   const { plantSummaries, loading, error } = useData(csvData);
 
-  if (loading) {
+  if (loading || isAutoLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="flex items-center space-x-3">
           <Loader2 className="w-8 h-8 animate-spin text-green-600" />
-          <span className="text-lg font-medium text-gray-700">Loading plants...</span>
+          <span className="text-lg font-medium text-gray-700">
+            {isAutoLoading ? 'Auto-loading your data...' : 'Loading plants...'}
+          </span>
         </div>
       </div>
     );

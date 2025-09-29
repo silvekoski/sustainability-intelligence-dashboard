@@ -3,10 +3,15 @@ import { AuthState, AuthUser } from '../types/auth';
 import { AuthService } from '../services/authService';
 import { supabase } from '../lib/supabase';
 import { PowerPlantData } from '../types';
+import { AutoDataLoader } from '../services/autoDataLoader';
 
 interface AuthContextType extends AuthState {
   csvData: PowerPlantData[] | null;
   setCsvData: (data: PowerPlantData[] | null) => void;
+  autoLoadedFileName: string | null;
+  isAutoLoading: boolean;
+  autoLoadError: string | null;
+  refreshAutoLoad: () => Promise<void>;
   login: (email: string, password: string) => Promise<{ error: any }>;
   register: (email: string, password: string, confirmPassword: string, fullName: string) => Promise<{ error: any }>;
   logout: () => Promise<void>;
@@ -37,6 +42,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     initialized: false,
   });
   const [csvData, setCsvData] = useState<PowerPlantData[] | null>(null);
+  const [autoLoadedFileName, setAutoLoadedFileName] = useState<string | null>(null);
+  const [isAutoLoading, setIsAutoLoading] = useState(false);
+  const [autoLoadError, setAutoLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -56,6 +64,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
               loading: false,
               initialized: true,
             });
+            
+            // Auto-load CSV data after authentication
+            autoLoadUserData(session.user.id);
           }
         } else {
           // No user session
@@ -97,6 +108,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
               loading: false,
               initialized: true,
             });
+            
+            // Auto-load CSV data after sign in
+            autoLoadUserData(session.user.id);
           }
         } else if (event === 'SIGNED_OUT') {
           if (mounted) {
@@ -105,6 +119,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
               loading: false,
               initialized: true,
             });
+            
+            // Clear data on sign out
+            setCsvData(null);
+            setAutoLoadedFileName(null);
+            setAutoLoadError(null);
+            AutoDataLoader.clearCache();
           }
         }
       }
@@ -138,6 +158,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [state.loading, state.initialized, state.user]);
 
+  // Auto-load user's CSV data
+  const autoLoadUserData = async (userId: string) => {
+    if (!userId) return;
+
+    setIsAutoLoading(true);
+    setAutoLoadError(null);
+
+    try {
+      const result = await AutoDataLoader.autoLoadLatestCSV(userId);
+      
+      if (result.success && result.data) {
+        setCsvData(result.data);
+        setAutoLoadedFileName(result.fileName || null);
+        
+        if (result.fromCache) {
+          console.log('Loaded CSV data from cache:', result.fileName);
+        } else {
+          console.log('Auto-loaded CSV data:', result.fileName);
+        }
+      } else {
+        // No error for no files found - this is expected for new users
+        if (result.error && !result.error.includes('No CSV files found')) {
+          setAutoLoadError(result.error);
+          console.warn('Auto-load warning:', result.error);
+        }
+      }
+    } catch (error) {
+      console.error('Auto-load error:', error);
+      setAutoLoadError(error instanceof Error ? error.message : 'Failed to auto-load data');
+    } finally {
+      setIsAutoLoading(false);
+    }
+  };
   const login = async (email: string, password: string) => {
     setState(prev => ({ ...prev, loading: true }));
 
@@ -167,6 +220,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
         fullName
       });
 
+  // Refresh auto-load (force reload from storage)
+  const refreshAutoLoad = async () => {
+    if (!state.user?.id) return;
+    
+    setIsAutoLoading(true);
+    setAutoLoadError(null);
+    
+    try {
+      const result = await AutoDataLoader.forceRefresh(state.user.id);
+      
+      if (result.success && result.data) {
+        setCsvData(result.data);
+        setAutoLoadedFileName(result.fileName || null);
+        console.log('Force refreshed CSV data:', result.fileName);
+      } else {
+        setAutoLoadError(result.error || 'Failed to refresh data');
+      }
+    } catch (error) {
+      console.error('Refresh error:', error);
+      setAutoLoadError(error instanceof Error ? error.message : 'Failed to refresh data');
+    } finally {
+      setIsAutoLoading(false);
+    }
+  };
 
       if (result.error) {
         setState(prev => ({ ...prev, loading: false }));
@@ -278,6 +355,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     ...state,
     csvData,
     setCsvData,
+    autoLoadedFileName,
+    isAutoLoading,
+    autoLoadError,
+    refreshAutoLoad,
     login,
     register,
     logout,
